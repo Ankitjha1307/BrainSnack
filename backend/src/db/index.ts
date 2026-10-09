@@ -1,49 +1,46 @@
-import { Pool, PoolClient, QueryResult, QueryResultRow } from 'pg';
+import mongoose from 'mongoose';
 import { config } from '../config/index';
 
-const pool = new Pool({
-  connectionString: config.database.url,
-  max: config.database.poolMax,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
-});
+/**
+ * Connect to MongoDB (Mongoose). The connection string comes from
+ * `config.database.uri`, which reads the `MONGODB_URI` environment variable and
+ * falls back to the mock local URI defined in `src/config/index.ts`.
+ */
+export const connectDatabase = async (): Promise<typeof mongoose> => {
+  mongoose.set('strictQuery', true);
 
-pool.on('error', (err) => {
-  console.error('Unexpected error on idle client', err);
-  process.exit(-1);
-});
+  await mongoose.connect(config.database.uri, {
+    serverSelectionTimeoutMS: config.database.connectTimeoutMs,
+  });
 
-export const query = async <T extends QueryResultRow = any>(
-  text: string,
-  params?: unknown[]
-): Promise<QueryResult<T>> => {
-  const start = Date.now();
-  const result = await pool.query<T>(text, params);
-  const duration = Date.now() - start;
   if (config.nodeEnv === 'development') {
-    // Log shape, not values - params often carry emails and answer keys.
-    console.log('query', { sql: text.replace(/\s+/g, ' ').trim().slice(0, 60), ms: duration, rows: result.rowCount });
+    const host = mongoose.connection.host ?? 'unknown-host';
+    const name = mongoose.connection.name ?? 'unknown-db';
+    console.log(`MongoDB connected: ${host}/${name}`);
   }
-  return result;
+
+  mongoose.connection.on('error', (error) => {
+    console.error('MongoDB connection error:', error);
+  });
+
+  return mongoose;
 };
 
-export const getClient = async (): Promise<PoolClient> => {
-  return pool.connect();
+export const disconnectDatabase = async (): Promise<void> => {
+  await mongoose.disconnect();
 };
 
-export const transaction = async <T>(callback: (client: PoolClient) => Promise<T>): Promise<T> => {
-  const client = await pool.connect();
+/** Cheap liveness probe used by `/health` and `/api/status`. */
+export const pingDatabase = async (): Promise<{ ok: true } | { ok: false; error: string }> => {
   try {
-    await client.query('BEGIN');
-    const result = await callback(client);
-    await client.query('COMMIT');
-    return result;
-  } catch (e) {
-    await client.query('ROLLBACK');
-    throw e;
-  } finally {
-    client.release();
+    if (!mongoose.connection.db) {
+      throw new Error('MongoDB is not connected');
+    }
+    await mongoose.connection.db.admin().ping();
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : 'Unknown database error' };
   }
 };
 
-export default pool;
+export default mongoose;

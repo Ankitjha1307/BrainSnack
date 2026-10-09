@@ -1,9 +1,9 @@
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
-import { query } from '../db';
-import { generateToken, authMiddleware } from '../middleware/auth';
-import { User, UserPublic, RegisterRequest, LoginRequest, AuthResponse } from '../types';
+import { generateToken, generateGuestToken, authMiddleware } from '../middleware/auth';
+import { User as UserModel, Streak as StreakModel } from '../models';
+import { UserPublic, RegisterRequest, LoginRequest, AuthResponse } from '../types';
 
 const router = Router();
 
@@ -12,8 +12,9 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MIN_PASSWORD_LENGTH = 8;
 const BCRYPT_ROUNDS = 12;
 
-export const toPublicUser = (user: User): UserPublic => ({
-  id: user.id,
+/** Works with both a hydrated document and a plain `toObject()` result. */
+export const toPublicUser = (user: any): UserPublic => ({
+  id: user.id ?? String(user._id),
   username: user.username,
   display_name: user.display_name,
   avatar_url: user.avatar_url,
@@ -24,6 +25,8 @@ export const toPublicUser = (user: User): UserPublic => ({
   is_guest: Boolean(user.is_guest),
   created_at: user.created_at,
 });
+
+const isDuplicateKey = (error: any): boolean => error?.code === 11000;
 
 // POST /api/auth/register
 router.post('/register', async (req: Request, res: Response) => {
@@ -62,18 +65,18 @@ router.post('/register', async (req: Request, res: Response) => {
 
     const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
 
-    let user: User;
+    let created;
     try {
-      const result = await query<User>(
-        `INSERT INTO users (username, email, password_hash, display_name, avatar_url)
-         VALUES ($1, $2, $3, $4, $5)
-         RETURNING *`,
-        [username, email, passwordHash, displayName, `https://api.dicebear.com/7.x/initials/svg?seed=${username}`]
-      );
-      user = result.rows[0];
-    } catch (error: any) {
       // Rely on the unique indexes rather than a check-then-insert race.
-      if (error?.code === '23505') {
+      created = await UserModel.create({
+        username,
+        email,
+        password_hash: passwordHash,
+        display_name: displayName,
+        avatar_url: `https://api.dicebear.com/7.x/initials/svg?seed=${username}`,
+      });
+    } catch (error: any) {
+      if (isDuplicateKey(error)) {
         return res
           .status(409)
           .json({ error: 'That email or username is already taken', fields: { username: 'Already taken' } });
@@ -81,11 +84,12 @@ router.post('/register', async (req: Request, res: Response) => {
       throw error;
     }
 
-    await query(
-      `INSERT INTO streaks (user_id, current_streak, longest_streak, last_activity_date)
-       VALUES ($1, 0, 0, NULL)
-       ON CONFLICT (user_id) DO NOTHING`,
-      [user.id]
+    const user = created.toObject() as any;
+
+    await StreakModel.updateOne(
+      { user_id: user.id },
+      { $setOnInsert: { user_id: user.id, current_streak: 0, longest_streak: 0, last_activity_date: null } },
+      { upsert: true }
     );
 
     const response: AuthResponse = { user: toPublicUser(user), token: generateToken(user) };
@@ -106,34 +110,28 @@ router.post('/login', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
-    const result = await query<User>(
-      'SELECT * FROM users WHERE email = $1 OR username = $1',
-      [normalizedEmail]
-    );
+    const account = await UserModel.findOne({
+      $or: [{ email: normalizedEmail }, { username: normalizedEmail }],
+    });
 
     // Guest rows have a random, unknown password. Reject them before the
     // bcrypt comparison so the error message is accurate.
-    const account = result.rows[0];
     if (account?.is_guest) {
       return res.status(401).json({ error: 'Guest sessions cannot be signed into. Continue as guest instead.' });
     }
 
     // Always run a bcrypt comparison so a missing account and a wrong password
     // take the same time - otherwise response latency enumerates valid emails.
-    const hash = result.rows[0]?.password_hash ?? DUMMY_HASH;
+    const hash = account?.password_hash ?? DUMMY_HASH;
     const passwordMatches = await bcrypt.compare(String(password), hash);
 
-    if (result.rows.length === 0 || !passwordMatches) {
+    if (!account || !passwordMatches) {
       return res.status(401).json({ error: 'Incorrect email or password' });
     }
 
-    const user = result.rows[0];
+    await UserModel.updateOne({ _id: account._id }, { $set: { last_active: new Date() } });
 
-    await query(
-      `UPDATE users SET last_active = CURRENT_TIMESTAMP WHERE id = $1`,
-      [user.id]
-    );
-
+    const user = account.toObject() as any;
     const response: AuthResponse = { user: toPublicUser(user), token: generateToken(user) };
     return res.json(response);
   } catch (error) {
@@ -145,11 +143,15 @@ router.post('/login', async (req: Request, res: Response) => {
 /**
  * POST /api/auth/guest
  *
- * Creates a throwaway account and returns a normal session token. Guests are
- * real `users` rows rather than a parallel anonymous code path, so every route
- * (progress, XP, quizzes, challenges, posts) works for them with no special
- * casing anywhere else in the API. `is_guest` is what lets us hide them from
- * leaderboards and searches later.
+ * Creates a throwaway account and returns a guest session token. Guests are
+ * real `users` documents rather than a parallel anonymous code path, so every
+ * route (progress, XP, quizzes, challenges, posts) works for them with no
+ * special casing anywhere else in the API. `is_guest` is what lets us hide them
+ * from leaderboards and searches.
+ *
+ * The token is NOT a JWT: it is the literal string `guest_<user id>`, which the
+ * auth middleware resolves directly. That is the "bypass all auth tokens"
+ * behaviour - no secret, signature or expiry is involved.
  */
 router.post('/guest', async (_req: Request, res: Response) => {
   try {
@@ -163,37 +165,33 @@ router.post('/guest', async (_req: Request, res: Response) => {
     // through the token issued below.
     const passwordHash = await bcrypt.hash(uuidv4(), BCRYPT_ROUNDS);
 
-    let user: User;
+    let created;
     try {
-      const result = await query<User>(
-        `INSERT INTO users (username, email, password_hash, display_name, avatar_url, is_guest)
-         VALUES ($1, $2, $3, $4, $5, TRUE)
-         RETURNING *`,
-        [
-          username,
-          email,
-          passwordHash,
-          'Guest',
-          `https://api.dicebear.com/7.x/thumbs/svg?seed=${username}`,
-        ]
-      );
-      user = result.rows[0];
+      created = await UserModel.create({
+        username,
+        email,
+        password_hash: passwordHash,
+        display_name: 'Guest',
+        avatar_url: `https://api.dicebear.com/7.x/thumbs/svg?seed=${username}`,
+        is_guest: true,
+      });
     } catch (error: any) {
       // Astronomically unlikely, but a collision must not surface as a 500.
-      if (error?.code === '23505') {
+      if (isDuplicateKey(error)) {
         return res.status(409).json({ error: 'Could not start a guest session, please try again' });
       }
       throw error;
     }
 
-    await query(
-      `INSERT INTO streaks (user_id, current_streak, longest_streak, last_activity_date)
-       VALUES ($1, 0, 0, NULL)
-       ON CONFLICT (user_id) DO NOTHING`,
-      [user.id]
+    const user = created.toObject() as any;
+
+    await StreakModel.updateOne(
+      { user_id: user.id },
+      { $setOnInsert: { user_id: user.id, current_streak: 0, longest_streak: 0, last_activity_date: null } },
+      { upsert: true }
     );
 
-    const response: AuthResponse = { user: toPublicUser(user), token: generateToken(user) };
+    const response: AuthResponse = { user: toPublicUser(user), token: generateGuestToken(user) };
     return res.status(201).json(response);
   } catch (error) {
     console.error('Guest session error:', error);

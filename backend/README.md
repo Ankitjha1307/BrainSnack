@@ -18,9 +18,9 @@ A gamified learning platform backend built with Node.js, Express, and TypeScript
 - **Runtime**: Node.js 18+
 - **Framework**: Express 4
 - **Language**: TypeScript 5
-- **Database**: PostgreSQL 14+
-- **Auth**: JWT + bcryptjs
-- **AI Integration**: HTTP calls to FastAPI service
+- **Database**: MongoDB + Mongoose ODM
+- **Auth**: JWT + bcryptjs (+ guest sessions)
+- **AI**: In-process TypeScript provider (mock question bank / Google Gemini)
 
 ## Project Structure
 
@@ -35,9 +35,11 @@ backend/
 │   ├── config/
 │   │   └── index.ts          # Configuration
 │   ├── db/
-│   │   ├── index.ts          # Database connection
-│   │   ├── schema.sql        # Database schema
-│   │   └── seed.sql          # Seed data
+│   │   ├── index.ts          # Mongoose connection
+│   │   ├── seed.ts           # Seed / reset script
+│   │   └── seedData.ts       # Plain seed tables
+│   ├── models/
+│   │   └── index.ts          # Mongoose models
 │   ├── middleware/
 │   │   └── auth.ts           # Auth middleware
 │   ├── routes/
@@ -45,15 +47,13 @@ backend/
 │   │   ├── users.ts          # User routes
 │   │   ├── topics.ts         # Topic routes
 │   │   ├── quizzes.ts        # Quiz routes
-│   │   ├── attempts.ts       # Attempt routes
 │   │   ├── leaderboard.ts    # Leaderboard routes
 │   │   ├── progress.ts       # Progress routes
-│   │   ├── feed.ts           # Feed routes
 │   │   ├── posts.ts          # Post routes
-│   │   ├── follows.ts        # Follow routes
-│   │   └── challenges.ts     # Challenge routes
+│   │   ├── challenges.ts     # Challenge routes
+│   │   └── ai.ts             # AI routes
 │   ├── services/
-│   │   ├── aiService.ts      # AI service integration
+│   │   ├── ai/               # In-process AI providers + question bank
 │   │   ├── xpService.ts      # XP system
 │   │   ├── streakService.ts  # Streak tracking
 │   │   ├── badgeService.ts   # Badge system
@@ -67,8 +67,7 @@ backend/
 ### Prerequisites
 
 - Node.js 18+
-- PostgreSQL 14+
-- (Optional) Python AI service running on port 8000
+- MongoDB 6+ (local or Atlas)
 
 ### Installation
 
@@ -84,17 +83,14 @@ cp .env.example .env
 
 ### Database Setup
 
+Set `MONGODB_URI` in `.env` to your MongoDB connection string (default mock:
+`mongodb://127.0.0.1:27017/brainsnack`), then:
+
 ```bash
-# Create database
-createdb brainsnack
-
-# Run schema
-npm run db:init
-
-# Run seed data
+# Create collections + seed demo data (clears collections first, re-runnable)
 npm run db:seed
 
-# Or both at once
+# Drop the database and reseed from scratch
 npm run db:reset
 ```
 
@@ -183,15 +179,22 @@ npm start
 - Daily streak: +50 XP
 - Challenge win: +100 XP
 
-## AI Service Integration
+## AI Integration
 
-The backend calls the AI service at `http://localhost:8000` for:
+AI runs in-process — there is no separate service. Quiz generation, validation,
+and adaptive recommendations are served by a TypeScript provider selected with
+`AI_PROVIDER`:
 
-- `POST /generate-quiz` - Generate quiz questions
-- `POST /validate-question` - Validate question quality
-- `POST /adaptive-recommendation` - Get difficulty recommendations
+- `mock` (default) — offline question bank, no API key needed
+- `gemini` — calls the Gemini REST API using `GEMINI_API_KEY`
 
-If the AI service is unavailable, the backend falls back to the local question bank.
+The product UI reaches AI through `POST /api/quizzes/generate` (authenticated,
+persists its output). Developer/tooling endpoints live under `/api/ai`:
+
+- `GET /api/ai/health` - active provider and status
+- `POST /api/ai/generate-quiz` - generate quiz questions
+- `POST /api/ai/validate-question` - validate question quality
+- `POST /api/ai/adaptive-recommendation` - get difficulty recommendations
 
 ## Demo Users
 
@@ -209,12 +212,14 @@ After seeding, you can login with any of these accounts (password: `password123`
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `PORT` | Server port | 3000 |
-| `DATABASE_URL` | PostgreSQL connection string | - |
+| `PORT` | Server port | 3001 |
+| `MONGODB_URI` | MongoDB connection string (mock/local by default) | `mongodb://127.0.0.1:27017/brainsnack` |
 | `JWT_SECRET` | JWT signing secret | - |
 | `JWT_EXPIRES_IN` | Token expiration | 7d |
-| `AI_SERVICE_URL` | AI service URL | http://localhost:8000 |
-| `CORS_ORIGIN` | Allowed CORS origin | http://localhost:5173 |
+| `AI_PROVIDER` | `mock` or `gemini` | `mock` |
+| `GEMINI_API_KEY` | Gemini API key (when `AI_PROVIDER=gemini`) | - |
+| `GEMINI_MODEL` | Gemini model id | `gemini-1.5-flash` |
+| `CORS_ORIGIN` | Allowed CORS origin(s) | `http://localhost:3000` |
 
 ## License
 

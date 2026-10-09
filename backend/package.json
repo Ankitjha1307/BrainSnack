@@ -1,15 +1,14 @@
 {
   "name": "brainsnack-backend",
   "version": "1.0.0",
-  "description": "BrainSnack - Gamified Learning Platform Backend",
+  "description": "BrainSnack - Gamified Learning Platform REST API (Node + Express + MongoDB)",
   "main": "dist/index.js",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "db:init": "psql $DATABASE_URL -f src/db/schema.sql",
-    "db:seed": "psql $DATABASE_URL -f src/db/seed.sql",
-    "db:reset": "psql $DATABASE_URL -f src/db/schema.sql && psql $DATABASE_URL -f src/db/seed.sql",
+    "db:seed": "ts-node src/db/seed.ts",
+    "db:reset": "ts-node src/db/seed.ts --reset",
     "lint": "eslint src/**/*.ts",
     "typecheck": "tsc --noEmit"
   },
@@ -17,7 +16,9 @@
     "learning",
     "quiz",
     "gamification",
-    "education"
+    "education",
+    "rest-api",
+    "mongodb"
   ],
   "author": "BrainSnack Team",
   "license": "MIT",
@@ -29,7 +30,7 @@
     "express-rate-limit": "^8.7.0",
     "helmet": "^8.3.0",
     "jsonwebtoken": "^9.0.2",
-    "pg": "^8.11.3",
+    "mongoose": "^8.9.5",
     "uuid": "^9.0.0"
   },
   "devDependencies": {
@@ -38,8 +39,8 @@
     "@types/express": "^4.17.21",
     "@types/jsonwebtoken": "^9.0.5",
     "@types/node": "^20.10.0",
-    "@types/pg": "^8.10.9",
     "@types/uuid": "^9.0.7",
+    "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.3.2"
   },

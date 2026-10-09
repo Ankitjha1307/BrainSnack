@@ -3,8 +3,8 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { config } from './config/index';
-import { query } from './db';
-import { runMigrations } from './db/migrations';
+import { connectDatabase, pingDatabase } from './db';
+import { getAIStatus, getProvider } from './services/ai';
 
 // Import routes
 import authRoutes from './routes/auth';
@@ -15,6 +15,7 @@ import leaderboardRoutes from './routes/leaderboard';
 import progressRoutes from './routes/progress';
 import postRoutes from './routes/posts';
 import challengeRoutes from './routes/challenges';
+import aiRoutes from './routes/ai';
 
 const app = express();
 
@@ -56,10 +57,11 @@ if (config.nodeEnv === 'development') {
 // instead of silently pretending everything is live.
 const dependencyStatus = async () => {
   const [db, ai] = await Promise.all([
-    query('SELECT 1')
-      .then(() => ({ ok: true as const }))
-      .catch((error) => ({ ok: false as const, error: (error as Error).message })),
-    import('./services/aiService').then((m) => m.aiService.getAIStatus()),
+    pingDatabase(),
+    getAIStatus().catch((error) => ({
+      reachable: false,
+      detail: error instanceof Error ? error.message : 'Unknown AI error',
+    })),
   ]);
 
   return {
@@ -89,6 +91,7 @@ app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/progress', progressRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/challenges', challengeRoutes);
+app.use('/api/ai', aiRoutes);
 
 // 404 handler
 app.use((req, res) => {
@@ -99,8 +102,8 @@ app.use((req, res) => {
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error('Unhandled error:', err);
   if (res.headersSent) return next(err);
-  // Postgres unique-violation surfaces as a 500 otherwise; make it a 409.
-  if (err?.code === '23505') {
+  // A Mongo unique-index violation surfaces as a 500 otherwise; make it a 409.
+  if (err?.code === 11000) {
     return res.status(409).json({ error: 'That record already exists' });
   }
   res.status(500).json({ error: 'Internal server error' });
@@ -108,37 +111,51 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 
 // Start server
 const PORT = config.port;
+const aiProvider = getProvider();
 
-// `schema.sql` drops every table, so it cannot be re-run against a live
-// database. These additive patches bring an existing one up to date instead.
-runMigrations().catch((error) => console.error('Migration runner failed:', error));
+const start = async (): Promise<void> => {
+  try {
+    await connectDatabase();
+  } catch (error) {
+    console.error(
+      'Failed to connect to MongoDB:',
+      error instanceof Error ? error.message : error
+    );
+    console.error(`Connection string in use: ${config.database.uri}`);
+    process.exit(1);
+  }
 
-app.listen(PORT, () => {
-  const line = (label: string, value: string) =>
-    `║  ${label.padEnd(17)}${value.padEnd(48 - label.length)}║`;
+  app.listen(PORT, () => {
+    const line = (label: string, value: string) =>
+      `║  ${label.padEnd(17)}${value.padEnd(48 - label.length)}║`;
 
-  console.log(
-    [
-      '',
-      '  🧠  BrainSnack API',
-      `      http://localhost:${PORT}`,
-      '',
-      `      env      ${config.nodeEnv}`,
-      `      cors     ${config.cors.origins.join(', ')}`,
-      `      ai       ${config.aiService.url}`,
-      '',
-      '      POST   /api/auth/register | /api/auth/login | /api/auth/guest',
-      '      GET    /health   (db + ai status)',
-      '      GET    /api/topics',
-      '      POST   /api/quizzes/generate',
-      '      POST   /api/quizzes/:id/answer | /complete',
-      '      GET    /api/progress | /api/leaderboard',
-      '      GET    /api/posts   POST /api/posts/:id/like',
-      '      GET    /api/challenges',
-      '      POST   /api/users/:id/follow',
-      '',
-    ].join('\n')
-  );
-});
+    console.log(
+      [
+        '',
+        '  🧠  BrainSnack API',
+        `      http://localhost:${PORT}`,
+        '',
+        `      env      ${config.nodeEnv}`,
+        `      cors     ${config.cors.origins.join(', ')}`,
+        `      db       ${config.database.uri}`,
+        `      ai       ${aiProvider.name}`,
+        '',
+        '      POST   /api/auth/register | /api/auth/login | /api/auth/guest',
+        '      GET    /health   (db + ai status)',
+        '      GET    /api/topics',
+        '      POST   /api/quizzes/generate',
+        '      POST   /api/quizzes/:id/answer | /complete',
+        '      GET    /api/progress | /api/leaderboard',
+        '      GET    /api/posts   POST /api/posts/:id/like',
+        '      GET    /api/challenges',
+        '      POST   /api/users/:id/follow',
+        '      POST   /api/ai/generate-quiz | /validate-question | /adaptive-recommendation',
+        '',
+      ].join('\n')
+    );
+  });
+};
+
+void start();
 
 export default app;

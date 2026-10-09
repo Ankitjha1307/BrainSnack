@@ -1,9 +1,14 @@
 import { Router, Request, Response } from 'express';
-import { query } from '../db';
 import { optionalAuth } from '../middleware/auth';
-import { Topic, Concept } from '../types';
+import { Topic, Concept, Question, LearnerTopicProgress } from '../models';
 
 const router = Router();
+
+/** Turn a lean document's `_id` into the `id` the frontend expects. */
+const withId = (doc: any): Record<string, unknown> => {
+  const { _id, ...rest } = doc;
+  return { id: String(_id), ...rest };
+};
 
 /**
  * GET /api/topics
@@ -13,39 +18,37 @@ const router = Router();
  */
 router.get('/', optionalAuth, async (req: Request, res: Response) => {
   try {
-    const result = await query<
-      Topic & {
-        questions_count: string;
-        concepts_count: string;
-        mastery: string | null;
-        accuracy: string | null;
-        questions_attempted: number | null;
-        difficulty_level: string | null;
-      }
-    >(
-      `SELECT t.*,
-              (SELECT COUNT(*) FROM questions q WHERE q.topic_id = t.id) AS questions_count,
-              (SELECT COUNT(*) FROM concepts c WHERE c.topic_id = t.id) AS concepts_count,
-              ltp.mastery_percentage AS mastery,
-              ltp.accuracy,
-              ltp.questions_attempted,
-              ltp.difficulty_level
-       FROM topics t
-       LEFT JOIN learner_topic_progress ltp
-         ON ltp.topic_id = t.id AND ltp.user_id = $1
-       ORDER BY t.name`,
-      [req.userId ?? null]
-    );
+    const userId = req.userId;
+
+    const [topics, progress, questionCounts, conceptCounts] = await Promise.all([
+      Topic.find().sort({ name: 1 }).lean(),
+      userId ? LearnerTopicProgress.find({ user_id: userId }).lean() : Promise.resolve([]),
+      Question.aggregate<{ _id: string; count: number }>([
+        { $group: { _id: '$topic_id', count: { $sum: 1 } } },
+      ]),
+      Concept.aggregate<{ _id: string; count: number }>([
+        { $group: { _id: '$topic_id', count: { $sum: 1 } } },
+      ]),
+    ]);
+
+    const progressByTopic = new Map(progress.map((p: any) => [String(p.topic_id), p]));
+    const questionsByTopic = new Map(questionCounts.map((r) => [String(r._id), r.count]));
+    const conceptsByTopic = new Map(conceptCounts.map((r) => [String(r._id), r.count]));
 
     return res.json(
-      result.rows.map((row) => ({
-        ...row,
-        questions_count: parseInt(String(row.questions_count), 10),
-        concepts_count: parseInt(String(row.concepts_count), 10),
-        mastery: row.mastery === null ? null : Math.round(parseFloat(String(row.mastery))),
-        accuracy: row.accuracy === null ? null : Math.round(parseFloat(String(row.accuracy))),
-        questions_attempted: row.questions_attempted ?? 0,
-      }))
+      topics.map((topic: any) => {
+        const id = String(topic._id);
+        const own = progressByTopic.get(id);
+        return {
+          ...withId(topic),
+          questions_count: questionsByTopic.get(id) ?? 0,
+          concepts_count: conceptsByTopic.get(id) ?? 0,
+          mastery: own ? Math.round(own.mastery_percentage) : null,
+          accuracy: own ? Math.round(own.accuracy) : null,
+          questions_attempted: own?.questions_attempted ?? 0,
+          difficulty_level: own?.difficulty_level ?? null,
+        };
+      })
     );
   } catch (error) {
     console.error('Get topics error:', error);
@@ -56,26 +59,24 @@ router.get('/', optionalAuth, async (req: Request, res: Response) => {
 /** GET /api/topics/:id - accepts a UUID or a slug, plus its concepts. */
 router.get('/:id', async (req: Request, res: Response) => {
   try {
-    const topicResult = await query<Topic>(
-      'SELECT * FROM topics WHERE id::text = $1 OR slug = $1',
-      [req.params.id]
-    );
-    if (topicResult.rows.length === 0) {
+    const topic = await Topic.findOne({
+      $or: [{ _id: req.params.id }, { slug: req.params.id }],
+    }).lean();
+    if (!topic) {
       return res.status(404).json({ error: 'Topic not found' });
     }
-    const topic = topicResult.rows[0];
 
-    const [conceptsResult, questionCountResult] = await Promise.all([
-      query<Concept>('SELECT * FROM concepts WHERE topic_id = $1 ORDER BY name', [topic.id]),
-      query<{ count: string }>('SELECT COUNT(*) AS count FROM questions WHERE topic_id = $1', [
-        topic.id,
-      ]),
+    const topicId = String((topic as any)._id);
+
+    const [concepts, questionCount] = await Promise.all([
+      Concept.find({ topic_id: topicId }).sort({ name: 1 }).lean(),
+      Question.countDocuments({ topic_id: topicId }),
     ]);
 
     return res.json({
-      ...topic,
-      concepts: conceptsResult.rows,
-      question_count: parseInt(questionCountResult.rows[0].count, 10),
+      ...withId(topic),
+      concepts: concepts.map(withId),
+      question_count: questionCount,
     });
   } catch (error) {
     console.error('Get topic error:', error);

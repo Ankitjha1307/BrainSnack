@@ -34,7 +34,8 @@ export default function TopicsPage() {
       {topics && topics.length === 0 && (
         <Card>
           <CardContent className="pt-6 text-center text-sm text-gray-500 dark:text-gray-400">
-            No topics have been created yet. Run <code>backend/src/db/seed.sql</code> to load them.
+            No topics have been created yet. Run <code>npm run db:seed</code> in the
+            backend to load them.
           </CardContent>
         </Card>
       )}

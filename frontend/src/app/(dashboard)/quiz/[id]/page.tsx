@@ -233,7 +233,7 @@ function QuizPlayer() {
             index={index}
             state={selectedOptionId === option.id ? "selected" : "default"}
             onClick={() => selectOption(option.id)}
-            disabled={selectedOptionId !== null || isSubmitting}
+            disabled={isSubmitting}
           />
         ))}
       </div>

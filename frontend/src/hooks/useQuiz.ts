@@ -154,6 +154,7 @@ export function useQuiz(quiz: Quiz | null, onFinished?: (result: QuizResult) => 
   useEffect(() => {
     if (phase !== "question") return;
     setTimeRemaining(perQuestion);
+    handlingRef.current = null;
 
     const id = setInterval(() => {
       setTimeRemaining((t) => (t <= 1 ? 0 : t - 1));
@@ -166,10 +167,13 @@ export function useQuiz(quiz: Quiz | null, onFinished?: (result: QuizResult) => 
     if (phase !== "question" || timeRemaining > 0) return;
     if (selected !== null) {
       void submit();
-    } else {
+    } else if (handlingRef.current === currentQuestion?.id || answers.length > index) {
       skip();
+    } else {
+      // Timer just reset for a new question; give it a moment
+      setTimeRemaining(perQuestion);
     }
-  }, [phase, timeRemaining, selected, submit, skip]);
+  }, [phase, timeRemaining, selected, submit, skip, currentQuestion?.id, answers.length, index, perQuestion]);
 
   return {
     phase,

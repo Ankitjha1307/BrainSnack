@@ -1,24 +1,61 @@
-import { query, transaction } from '../db';
-import { Badge, UserBadge } from '../types';
+import { Badge, UserBadge, User, Quiz, Streak, LearnerTopicProgress, IBadge } from '../models';
 
-export const getAllBadges = async (): Promise<Badge[]> => {
-  const result = await query<Badge>(
-    'SELECT * FROM badges ORDER BY criteria_type, criteria_value'
-  );
-  return result.rows;
+/** A badge row flattened with the learner's earned metadata, as the API returns it. */
+export interface UserBadgeRow {
+  id: string;
+  user_id: string;
+  badge_id: string;
+  earned_at: Date;
+  name: string;
+  slug: string;
+  description: string | null;
+  icon: string;
+  criteria_type: IBadge['criteria_type'];
+  criteria_value: number;
+}
+
+const toBadgeRow = (doc: any): UserBadgeRow => ({
+  id: String(doc._id),
+  name: doc.name,
+  slug: doc.slug,
+  description: doc.description ?? null,
+  icon: doc.icon ?? '🏆',
+  criteria_type: doc.criteria_type,
+  criteria_value: doc.criteria_value,
+  // Present so the shared wire shape is stable for callers that include it.
+  user_id: doc.user_id ?? '',
+  badge_id: String(doc._id),
+  earned_at: doc.earned_at,
+});
+
+export const getAllBadges = async (): Promise<UserBadgeRow[]> => {
+  const rows = await Badge.find().sort({ criteria_type: 1, criteria_value: 1 }).lean();
+  return rows.map((row) => toBadgeRow(row));
 };
 
-export const getUserBadges = async (userId: string): Promise<UserBadge[]> => {
-  const result = await query<UserBadge>(
-    `SELECT ub.id, ub.user_id, ub.badge_id, ub.earned_at,
-            b.name, b.slug, b.description, b.icon, b.criteria_type, b.criteria_value
-     FROM user_badges ub
-     JOIN badges b ON ub.badge_id = b.id
-     WHERE ub.user_id = $1
-     ORDER BY ub.earned_at DESC`,
-    [userId]
-  );
-  return result.rows;
+export const getUserBadges = async (userId: string): Promise<UserBadgeRow[]> => {
+  const rows = await UserBadge.aggregate([
+    { $match: { user_id: userId } },
+    { $sort: { earned_at: -1 } },
+    { $lookup: { from: 'badges', localField: 'badge_id', foreignField: '_id', as: 'badge' } },
+    { $unwind: '$badge' },
+    {
+      $project: {
+        _id: 0,
+        id: '$_id',
+        user_id: 1,
+        badge_id: 1,
+        earned_at: 1,
+        name: '$badge.name',
+        slug: '$badge.slug',
+        description: '$badge.description',
+        icon: '$badge.icon',
+        criteria_type: '$badge.criteria_type',
+        criteria_value: '$badge.criteria_value',
+      },
+    },
+  ]);
+  return rows as UserBadgeRow[];
 };
 
 /** Earned badges plus how far the learner is toward the ones still locked. */
@@ -32,14 +69,14 @@ export const getBadgeProgress = async (userId: string) => {
   const earnedIds = new Set(earned.map((b) => b.badge_id));
   const locked = all
     .filter((b) => !earnedIds.has(b.id))
-    .map((b) => ({
-      ...b,
-      current: currentValueFor(b.criteria_type, stats),
-      progress: Math.min(
-        100,
-        Math.round((currentValueFor(b.criteria_type, stats) / b.criteria_value) * 100)
-      ),
-    }))
+    .map((b) => {
+      const current = currentValueFor(b.criteria_type, stats);
+      return {
+        ...b,
+        current,
+        progress: Math.min(100, Math.round((current / b.criteria_value) * 100)),
+      };
+    })
     .sort((a, b) => b.progress - a.progress);
 
   return { earned, locked };
@@ -55,33 +92,25 @@ type BadgeStats = {
 };
 
 const getBadgeStats = async (userId: string): Promise<BadgeStats> => {
-  const result = await query<BadgeStats>(
-    `SELECT
-       u.xp,
-       u.level,
-       COALESCE(s.current_streak, 0) AS current_streak,
-       (SELECT COUNT(*) FROM quizzes q WHERE q.user_id = u.id AND q.status = 'completed') AS quiz_count,
-       (SELECT COUNT(*) FROM quizzes q WHERE q.user_id = u.id AND q.status = 'completed' AND q.score = 100) AS perfect_score,
-       (SELECT COUNT(*) FROM learner_topic_progress ltp
-         WHERE ltp.user_id = u.id AND ltp.mastery_percentage >= 90) AS topic_mastery
-     FROM users u
-     LEFT JOIN streaks s ON s.user_id = u.id
-     WHERE u.id = $1`,
-    [userId]
-  );
+  const [user, streak, quizCount, perfectCount, topicMasteryCount] = await Promise.all([
+    User.findById(userId).select('xp level').lean(),
+    Streak.findOne({ user_id: userId }).select('current_streak').lean(),
+    Quiz.countDocuments({ user_id: userId, status: 'completed' }),
+    Quiz.countDocuments({ user_id: userId, status: 'completed', score: 100 }),
+    LearnerTopicProgress.countDocuments({ user_id: userId, mastery_percentage: { $gte: 90 } }),
+  ]);
 
-  const row = result.rows[0];
   return {
-    xp: row?.xp ?? 0,
-    level: row?.level ?? 1,
-    current_streak: row?.current_streak ?? 0,
-    quiz_count: parseInt(String(row?.quiz_count ?? 0), 10),
-    perfect_score: parseInt(String(row?.perfect_score ?? 0), 10),
-    topic_mastery: parseInt(String(row?.topic_mastery ?? 0), 10),
+    xp: (user as any)?.xp ?? 0,
+    level: (user as any)?.level ?? 1,
+    current_streak: (streak as any)?.current_streak ?? 0,
+    quiz_count: quizCount,
+    perfect_score: perfectCount,
+    topic_mastery: topicMasteryCount,
   };
 };
 
-const currentValueFor = (criteriaType: Badge['criteria_type'], stats: BadgeStats): number => {
+const currentValueFor = (criteriaType: IBadge['criteria_type'], stats: BadgeStats): number => {
   switch (criteriaType) {
     case 'xp':
       return stats.xp;
@@ -104,41 +133,44 @@ const currentValueFor = (criteriaType: Badge['criteria_type'], stats: BadgeStats
  * Award any badge whose criteria are now met.
  *
  * Each criterion is compared against the badge's own `criteria_value`, so
- * "master 3 topics" means three topics rather than one. Inserts rely on
- * UNIQUE(user_id, badge_id) so concurrent completions cannot double-award.
+ * "master 3 topics" means three topics rather than one. Inserts rely on the
+ * UNIQUE(user_id, badge_id) index so concurrent completions cannot
+ * double-award - a duplicate-key error is treated as "already had it".
  */
-export const checkAndAwardBadges = async (userId: string): Promise<Badge[]> => {
-  const newBadges: Badge[] = [];
+export const checkAndAwardBadges = async (userId: string): Promise<UserBadgeRow[]> => {
+  const newBadges: UserBadgeRow[] = [];
 
-  const [stats, badgesResult, earnedResult] = await Promise.all([
+  const [stats, badges, earned] = await Promise.all([
     getBadgeStats(userId),
-    query<Badge>('SELECT * FROM badges'),
-    query<{ badge_id: string }>('SELECT badge_id FROM user_badges WHERE user_id = $1', [userId]),
+    Badge.find().lean(),
+    UserBadge.find({ user_id: userId }).select('badge_id').lean(),
   ]);
 
-  const earnedBadgeIds = new Set(earnedResult.rows.map((r) => r.badge_id));
-  const eligible = badgesResult.rows.filter(
+  const earnedBadgeIds = new Set(earned.map((r: any) => String(r.badge_id)));
+  const eligible = badges.filter(
     (badge) =>
-      !earnedBadgeIds.has(badge.id) &&
+      !earnedBadgeIds.has(String(badge._id)) &&
       currentValueFor(badge.criteria_type, stats) >= badge.criteria_value
   );
 
-  if (eligible.length === 0) return newBadges;
-
-  await transaction(async (client) => {
-    for (const badge of eligible) {
-      const inserted = await client.query(
-        `INSERT INTO user_badges (user_id, badge_id)
-         VALUES ($1, $2)
-         ON CONFLICT (user_id, badge_id) DO NOTHING
-         RETURNING badge_id`,
-        [userId, badge.id]
+  for (const badge of eligible) {
+    try {
+      const inserted = await UserBadge.create({ user_id: userId, badge_id: String(badge._id) });
+      newBadges.push(
+        toBadgeRow({
+          ...(badge as any),
+          _id: badge._id,
+          user_id: userId,
+          badge_id: badge._id,
+          earned_at: inserted.earned_at,
+        })
       );
-      if (inserted.rowCount && inserted.rowCount > 0) {
-        newBadges.push(badge);
-      }
+    } catch (error: any) {
+      // 11000 = duplicate key: someone (or a concurrent request) already
+      // awarded it. That is success, not a failure.
+      if (error?.code !== 11000) throw error;
     }
-  });
+  }
 
   return newBadges;
 };

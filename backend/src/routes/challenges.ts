@@ -1,83 +1,89 @@
 import { Router, Request, Response } from 'express';
-import { v4 as uuidv4 } from 'uuid';
-import { query } from '../db';
 import { authMiddleware } from '../middleware/auth';
-import { Challenge } from '../types';
 import { xpService } from '../services/xpService';
+import { Challenge, Topic, Quiz, User, newId } from '../models';
 
 const router = Router();
 
 const CHALLENGE_XP = 100;
 const MIN_TARGET_SCORE = 50;
 
-const CHALLENGE_SELECT = `
-  SELECT c.*,
-         cu.username AS challenger_username, cu.display_name AS challenger_display_name,
-         cu.avatar_url AS challenger_avatar_url, cu.xp AS challenger_xp, cu.level AS challenger_level,
-         cu.streak AS challenger_streak,
-         eu.username AS challengee_username, eu.display_name AS challengee_display_name,
-         eu.avatar_url AS challengee_avatar_url, eu.xp AS challengee_xp, eu.level AS challengee_level,
-         eu.streak AS challengee_streak,
-         t.name AS topic_name, t.icon AS topic_icon, t.slug AS topic_slug
-  FROM challenges c
-  JOIN users cu ON c.challenger_id = cu.id
-  JOIN users eu ON c.challengee_id = eu.id
-  LEFT JOIN topics t ON c.topic_id = t.id
-`;
+/** Lookups shared by every read, so a challenge always carries both users and its topic. */
+const challengeLookups: any[] = [
+  { $lookup: { from: 'users', localField: 'challenger_id', foreignField: '_id', as: 'challenger' } },
+  { $unwind: '$challenger' },
+  { $lookup: { from: 'users', localField: 'challengee_id', foreignField: '_id', as: 'challengee' } },
+  { $unwind: '$challengee' },
+  { $lookup: { from: 'topics', localField: 'topic_id', foreignField: '_id', as: 'topic' } },
+  { $unwind: { path: '$topic', preserveNullAndEmptyArrays: true } },
+];
 
-/** Flatten the aliased join columns into the nested shape the UI renders. */
+const findChallenge = async (id: string, userId?: string) => {
+  const match: Record<string, unknown> = { _id: id };
+  if (userId) {
+    match.$or = [{ challenger_id: userId }, { challengee_id: userId }];
+  }
+  const rows = await Challenge.aggregate([{ $match: match }, ...challengeLookups]);
+  return rows[0] ?? null;
+};
+
+/** Flatten the looked-up documents into the nested shape the UI renders. */
 const shapeChallenge = (row: any, viewerId?: string) => {
+  const challengerScore = row.challenger_score ?? null;
+  const challengeeScore = row.challengee_score ?? null;
   const scores: Record<string, number | null> = {
-    [row.challenger_id]: row.challenger_score,
-    [row.challengee_id]: row.challengee_score,
+    [row.challenger_id]: challengerScore,
+    [row.challengee_id]: challengeeScore,
   };
 
   let winnerId: string | null = null;
-  if (row.status === 'completed') {
-    if (row.challenger_score !== null && row.challengee_score !== null) {
-      if (row.challenger_score > row.challengee_score) winnerId = row.challenger_id;
-      else if (row.challengee_score > row.challenger_score) winnerId = row.challengee_id;
-    }
+  if (row.status === 'completed' && challengerScore !== null && challengeeScore !== null) {
+    if (challengerScore > challengeeScore) winnerId = row.challenger_id;
+    else if (challengeeScore > challengerScore) winnerId = row.challengee_id;
   }
 
+  const viewerScore = viewerId ? scores[viewerId] ?? null : null;
+
   return {
-    id: row.id,
-    topic_id: row.topic_id,
-    topic_name: row.topic_name ?? 'General Knowledge',
-    topic_icon: row.topic_icon ?? '🧠',
-    topic_slug: row.topic_slug,
+    id: String(row._id),
+    topic_id: row.topic_id ?? null,
+    topic_name: row.topic?.name ?? 'General Knowledge',
+    topic_icon: row.topic?.icon ?? '🧠',
+    topic_slug: row.topic?.slug ?? null,
     target_score: row.target_score,
     status: row.status,
     created_at: row.created_at,
     completed_at: row.completed_at,
     challenger: {
       id: row.challenger_id,
-      username: row.challenger_username,
-      display_name: row.challenger_display_name,
-      avatar_url: row.challenger_avatar_url,
-      xp: row.challenger_xp,
-      level: row.challenger_level,
-      streak: row.challenger_streak,
-      score: row.challenger_score,
+      username: row.challenger.username,
+      display_name: row.challenger.display_name,
+      avatar_url: row.challenger.avatar_url,
+      xp: row.challenger.xp,
+      level: row.challenger.level,
+      streak: row.challenger.streak,
+      score: challengerScore,
     },
     challengee: {
       id: row.challengee_id,
-      username: row.challengee_username,
-      display_name: row.challengee_display_name,
-      avatar_url: row.challengee_avatar_url,
-      xp: row.challengee_xp,
-      level: row.challengee_level,
-      streak: row.challengee_streak,
-      score: row.challengee_score,
+      username: row.challengee.username,
+      display_name: row.challengee.display_name,
+      avatar_url: row.challengee.avatar_url,
+      xp: row.challengee.xp,
+      level: row.challengee.level,
+      streak: row.challengee.streak,
+      score: challengeeScore,
     },
     // Which side the viewer is on - drives the CTA in the UI.
-    viewer_role: viewerId === row.challenger_id ? 'challenger' : viewerId === row.challengee_id ? 'challengee' : null,
-    viewer_score: viewerId ? scores[viewerId] ?? null : null,
-    viewer_has_submitted: viewerId ? scores[viewerId] !== null && scores[viewerId] !== undefined : false,
-    target_reached:
-      viewerId !== undefined && scores[viewerId] !== null && scores[viewerId] !== undefined
-        ? scores[viewerId] >= row.target_score
+    viewer_role:
+      viewerId === row.challenger_id
+        ? 'challenger'
+        : viewerId === row.challengee_id
+        ? 'challengee'
         : null,
+    viewer_score: viewerScore,
+    viewer_has_submitted: viewerScore !== null,
+    target_reached: viewerScore !== null ? viewerScore >= row.target_score : null,
     winner_id: winnerId,
   };
 };
@@ -106,45 +112,48 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
         .json({ error: `Target score must be between ${MIN_TARGET_SCORE} and 100` });
     }
 
-    const challengeeResult = await query('SELECT id FROM users WHERE id = $1', [challengee_id]);
-    if (challengeeResult.rows.length === 0) {
+    const challengee = await User.findById(challengee_id).select('_id').lean();
+    if (!challengee) {
       return res.status(404).json({ error: 'That learner no longer exists' });
     }
 
     let resolvedTopicId: string | null = null;
     if (topic_id) {
-      const topicResult = await query<{ id: string }>(
-        'SELECT id FROM topics WHERE id::text = $1 OR slug = $1',
-        [String(topic_id)]
-      );
-      if (topicResult.rows.length === 0) {
+      const topic = await Topic.findOne({
+        $or: [{ _id: String(topic_id) }, { slug: String(topic_id) }],
+      })
+        .select('_id')
+        .lean();
+      if (!topic) {
         return res.status(404).json({ error: 'Topic not found' });
       }
-      resolvedTopicId = topicResult.rows[0].id;
+      resolvedTopicId = String((topic as any)._id);
     }
 
     // One open challenge per pair per topic: otherwise the inbox fills with
     // identical requests and nobody can tell which one to accept.
-    const duplicate = await query(
-      `SELECT 1 FROM challenges
-       WHERE challenger_id = $1 AND challengee_id = $2
-         AND status IN ('pending', 'accepted')
-         AND topic_id IS NOT DISTINCT FROM $3`,
-      [challengerId, challengee_id, resolvedTopicId]
-    );
-    if (duplicate.rows.length > 0) {
+    const duplicate = await Challenge.exists({
+      challenger_id: challengerId,
+      challengee_id,
+      status: { $in: ['pending', 'accepted'] },
+      topic_id: resolvedTopicId,
+    });
+    if (duplicate) {
       return res.status(409).json({ error: 'You already have an open challenge with them' });
     }
 
-    const challengeId = uuidv4();
-    await query(
-      `INSERT INTO challenges (id, challenger_id, challengee_id, topic_id, target_score, status)
-       VALUES ($1, $2, $3, $4, $5, 'pending')`,
-      [challengeId, challengerId, challengee_id, resolvedTopicId, target]
-    );
+    const createId = newId();
+    await Challenge.create({
+      _id: createId,
+      challenger_id: challengerId,
+      challengee_id,
+      topic_id: resolvedTopicId,
+      target_score: target,
+      status: 'pending',
+    });
 
-    const created = await query(`${CHALLENGE_SELECT} WHERE c.id = $1`, [challengeId]);
-    return res.status(201).json(shapeChallenge(created.rows[0], challengerId));
+    const created = await findChallenge(createId);
+    return res.status(201).json(shapeChallenge(created, challengerId));
   } catch (error) {
     console.error('Create challenge error:', error);
     return res.status(500).json({ error: 'Could not create that challenge' });
@@ -157,24 +166,35 @@ router.get('/', authMiddleware, async (req: Request, res: Response) => {
     const userId = req.userId!;
     const { status } = req.query;
 
-    const params: unknown[] = [userId];
-    let statusFilter = '';
+    const match: Record<string, unknown> = {
+      $or: [{ challenger_id: userId }, { challengee_id: userId }],
+    };
     if (typeof status === 'string' && status) {
-      params.push(status);
-      statusFilter = ` AND c.status = $${params.length}`;
+      match.status = status;
     }
 
-    const result = await query(
-      `${CHALLENGE_SELECT}
-       WHERE (c.challenger_id = $1 OR c.challengee_id = $1)${statusFilter}
-       ORDER BY
-         CASE c.status WHEN 'accepted' THEN 0 WHEN 'pending' THEN 1 ELSE 2 END,
-         c.created_at DESC
-       LIMIT 50`,
-      params
-    );
+    const rows = await Challenge.aggregate([
+      { $match: match },
+      ...challengeLookups,
+      {
+        // Accepted first, then pending, then everything else.
+        $addFields: {
+          status_order: {
+            $switch: {
+              branches: [
+                { case: { $eq: ['$status', 'accepted'] }, then: 0 },
+                { case: { $eq: ['$status', 'pending'] }, then: 1 },
+              ],
+              default: 2,
+            },
+          },
+        },
+      },
+      { $sort: { status_order: 1, created_at: -1 } },
+      { $limit: 50 },
+    ]);
 
-    return res.json(result.rows.map((row) => shapeChallenge(row, userId)));
+    return res.json(rows.map((row) => shapeChallenge(row, userId)));
   } catch (error) {
     console.error('Get challenges error:', error);
     return res.status(500).json({ error: 'Internal server error' });
@@ -184,16 +204,11 @@ router.get('/', authMiddleware, async (req: Request, res: Response) => {
 /** GET /api/challenges/:id */
 router.get('/:id', authMiddleware, async (req: Request, res: Response) => {
   try {
-    const userId = req.userId!;
-    const result = await query(
-      `${CHALLENGE_SELECT}
-       WHERE c.id = $1 AND (c.challenger_id = $2 OR c.challengee_id = $2)`,
-      [req.params.id, userId]
-    );
-    if (result.rows.length === 0) {
+    const row = await findChallenge(req.params.id, req.userId!);
+    if (!row) {
       return res.status(404).json({ error: 'Challenge not found' });
     }
-    return res.json(shapeChallenge(result.rows[0], userId));
+    return res.json(shapeChallenge(row, req.userId!));
   } catch (error) {
     console.error('Get challenge error:', error);
     return res.status(500).json({ error: 'Internal server error' });
@@ -204,18 +219,17 @@ router.get('/:id', authMiddleware, async (req: Request, res: Response) => {
 router.post('/:id/accept', authMiddleware, async (req: Request, res: Response) => {
   try {
     const userId = req.userId!;
-    const result = await query(
-      `UPDATE challenges SET status = 'accepted'
-       WHERE id = $1 AND challengee_id = $2 AND status = 'pending'
-       RETURNING id`,
-      [req.params.id, userId]
+    const updated = await Challenge.findOneAndUpdate(
+      { _id: req.params.id, challengee_id: userId, status: 'pending' },
+      { $set: { status: 'accepted' } },
+      { new: true }
     );
-    if (result.rows.length === 0) {
+    if (!updated) {
       return res.status(409).json({ error: 'This challenge is not waiting on you' });
     }
 
-    const full = await query(`${CHALLENGE_SELECT} WHERE c.id = $1`, [req.params.id]);
-    return res.json(shapeChallenge(full.rows[0], userId));
+    const row = await findChallenge(req.params.id);
+    return res.json(shapeChallenge(row, userId));
   } catch (error) {
     console.error('Accept challenge error:', error);
     return res.status(500).json({ error: 'Internal server error' });
@@ -226,13 +240,12 @@ router.post('/:id/accept', authMiddleware, async (req: Request, res: Response) =
 router.post('/:id/decline', authMiddleware, async (req: Request, res: Response) => {
   try {
     const userId = req.userId!;
-    const result = await query(
-      `UPDATE challenges SET status = 'declined'
-       WHERE id = $1 AND challengee_id = $2 AND status = 'pending'
-       RETURNING id`,
-      [req.params.id, userId]
+    const updated = await Challenge.findOneAndUpdate(
+      { _id: req.params.id, challengee_id: userId, status: 'pending' },
+      { $set: { status: 'declined' } },
+      { new: true }
     );
-    if (result.rows.length === 0) {
+    if (!updated) {
       return res.status(409).json({ error: 'This challenge is not waiting on you' });
     }
     return res.json({ id: req.params.id, status: 'declined' });
@@ -246,8 +259,7 @@ router.post('/:id/decline', authMiddleware, async (req: Request, res: Response) 
  * POST /api/challenges/:id/submit  { quiz_id }
  *
  * The score is read from a completed quiz the caller actually took, never from
- * the request body - the previous `POST /complete` accepted `{ score: 100 }`
- * directly, which made challenges free XP.
+ * the request body - a client must not be able to submit `{ score: 100 }`.
  */
 router.post('/:id/submit', authMiddleware, async (req: Request, res: Response) => {
   try {
@@ -258,88 +270,86 @@ router.post('/:id/submit', authMiddleware, async (req: Request, res: Response) =
       return res.status(400).json({ error: 'quiz_id is required' });
     }
 
-    const challengeResult = await query<Challenge>(
-      'SELECT * FROM challenges WHERE id = $1 AND (challenger_id = $2 OR challengee_id = $2)',
-      [req.params.id, userId]
-    );
-    if (challengeResult.rows.length === 0) {
+    const challenge = await Challenge.findOne({
+      _id: req.params.id,
+      $or: [{ challenger_id: userId }, { challengee_id: userId }],
+    }).lean();
+    if (!challenge) {
       return res.status(404).json({ error: 'Challenge not found' });
     }
-    const challenge = challengeResult.rows[0];
 
-    if (challenge.status !== 'accepted') {
-      return res
-        .status(400)
-        .json({ error: challenge.status === 'pending' ? 'Accept the challenge first' : 'This challenge is closed' });
+    if ((challenge as any).status !== 'accepted') {
+      return res.status(400).json({
+        error:
+          (challenge as any).status === 'pending'
+            ? 'Accept the challenge first'
+            : 'This challenge is closed',
+      });
     }
 
     // The quiz must belong to the caller, be finished, and cover the challenge topic.
-    const quizResult = await query<{ id: string; score: number; topic_id: string | null }>(
-      `SELECT id, score, topic_id FROM quizzes
-       WHERE id = $1 AND user_id = $2 AND status = 'completed'`,
-      [quiz_id, userId]
-    );
-    if (quizResult.rows.length === 0) {
+    const quiz = await Quiz.findOne({ _id: quiz_id, user_id: userId, status: 'completed' }).lean();
+    if (!quiz) {
       return res.status(404).json({ error: 'Finish a quiz first, then submit its result' });
     }
-    const quiz = quizResult.rows[0];
 
-    if (challenge.topic_id && quiz.topic_id && challenge.topic_id !== quiz.topic_id) {
-      return res.status(400).json({ error: 'That quiz is for a different topic than the challenge' });
+    if (
+      (challenge as any).topic_id &&
+      (quiz as any).topic_id &&
+      (challenge as any).topic_id !== (quiz as any).topic_id
+    ) {
+      return res
+        .status(400)
+        .json({ error: 'That quiz is for a different topic than the challenge' });
     }
 
-    const isChallenger = challenge.challenger_id === userId;
-    await query(
-      isChallenger
-        ? 'UPDATE challenges SET challenger_score = $1 WHERE id = $2'
-        : 'UPDATE challenges SET challengee_score = $1 WHERE id = $2',
-      [quiz.score, challenge.id]
-    );
+    const isChallenger = (challenge as any).challenger_id === userId;
+    const scoreField = isChallenger ? 'challenger_score' : 'challengee_score';
+    await Challenge.updateOne({ _id: (challenge as any)._id }, { $set: { [scoreField]: (quiz as any).score } });
 
-    const refreshed = await query<Challenge>('SELECT * FROM challenges WHERE id = $1', [
-      challenge.id,
-    ]);
-    const updated = refreshed.rows[0];
+    const updated = await Challenge.findById((challenge as any)._id).lean();
+    const challengerScore = (updated as any).challenger_score;
+    const challengeeScore = (updated as any).challengee_score;
 
-    if (updated.challenger_score !== null && updated.challengee_score !== null) {
-      const challengerWon = updated.challenger_score > updated.challengee_score;
-      const challengeeWon = updated.challengee_score > updated.challenger_score;
+    if (challengerScore !== null && challengeeScore !== null) {
+      const challengerWon = challengerScore > challengeeScore;
+      const challengeeWon = challengeeScore > challengerScore;
       const winnerId = challengerWon
-        ? updated.challenger_id
+        ? (updated as any).challenger_id
         : challengeeWon
-        ? updated.challengee_id
+        ? (updated as any).challengee_id
         : null;
 
-      await query(
-        `UPDATE challenges SET status = 'completed', completed_at = CURRENT_TIMESTAMP WHERE id = $1`,
-        [challenge.id]
+      await Challenge.updateOne(
+        { _id: (challenge as any)._id },
+        { $set: { status: 'completed', completed_at: new Date() } }
       );
 
       if (winnerId) {
         await xpService.awardXP(
           winnerId,
           CHALLENGE_XP,
-          `Won a challenge (${updated.challenger_score}% vs ${updated.challengee_score}%)`,
+          `Won a challenge (${challengerScore}% vs ${challengeeScore}%)`,
           'challenge',
-          challenge.id
+          String((challenge as any)._id)
         );
       }
 
-      const final = await query(`${CHALLENGE_SELECT} WHERE c.id = $1`, [challenge.id]);
+      const final = await findChallenge(String((challenge as any)._id));
       return res.json({
-        challenge: shapeChallenge(final.rows[0], userId),
+        challenge: shapeChallenge(final, userId),
         result: winnerId ? 'decided' : 'draw',
         winner_id: winnerId,
       });
     }
 
-    const partial = await query(`${CHALLENGE_SELECT} WHERE c.id = $1`, [challenge.id]);
+    const partial = await findChallenge(String((challenge as any)._id));
     return res.json({
-      challenge: shapeChallenge(partial.rows[0], userId),
+      challenge: shapeChallenge(partial, userId),
       result: 'waiting_for_opponent',
-      your_score: quiz.score,
-      target_score: challenge.target_score,
-      target_reached: quiz.score >= challenge.target_score,
+      your_score: (quiz as any).score,
+      target_score: (challenge as any).target_score,
+      target_reached: (quiz as any).score >= (challenge as any).target_score,
     });
   } catch (error) {
     console.error('Submit challenge error:', error);

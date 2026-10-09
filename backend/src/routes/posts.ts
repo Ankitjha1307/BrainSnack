@@ -1,7 +1,6 @@
 import { Router, Request, Response } from 'express';
-import { v4 as uuidv4 } from 'uuid';
-import { query } from '../db';
 import { authMiddleware, optionalAuth } from '../middleware/auth';
+import { Post, User } from '../models';
 
 const router = Router();
 
@@ -11,36 +10,56 @@ type PostType = (typeof POST_TYPES)[number];
 const MAX_CAPTION_LENGTH = 280;
 
 /**
- * Normalise a post into the shape the client renders.
- *
- * `p.*` used to be spread into the response, which leaked the author's user_id
- * alongside the joined display columns and made the payload ambiguous.
+ * Shape a post (either a projected aggregate row or a hand-built object) into
+ * the payload the client renders.
  */
 const shapePost = (row: any) => ({
-  id: row.id,
+  id: String(row.id ?? row._id),
   type: row.type,
-  content: typeof row.content === 'string' ? safeParse(row.content) : row.content,
-  caption: row.caption,
+  content: row.content ?? {},
+  caption: row.caption ?? null,
   created_at: row.created_at,
-  likes_count: parseInt(String(row.likes_count ?? 0), 10),
+  likes_count: Number(row.likes_count ?? 0),
   liked_by_user: Boolean(row.liked_by_user),
   author: {
-    id: row.user_id,
+    id: row.user_id ?? row.author_id,
     username: row.username,
     display_name: row.display_name,
-    avatar_url: row.avatar_url,
+    avatar_url: row.avatar_url ?? null,
     xp: row.xp,
     level: row.level,
   },
 });
 
-const safeParse = (value: string) => {
-  try {
-    return JSON.parse(value);
-  } catch {
-    return { text: value };
-  }
-};
+/**
+ * Aggregate pipeline for a feed. `likes` is embedded on the post, so counts and
+ * the viewer's like state need no join.
+ */
+const feedPipeline = (match: Record<string, unknown>, viewerId: string | null): any[] => [
+  { $match: match },
+  { $sort: { created_at: -1 } },
+  { $lookup: { from: 'users', localField: 'user_id', foreignField: '_id', as: 'author' } },
+  { $unwind: '$author' },
+  {
+    $project: {
+      _id: 0,
+      id: '$_id',
+      type: 1,
+      content: 1,
+      caption: 1,
+      created_at: 1,
+      user_id: 1,
+      is_guest: '$author.is_guest',
+      username: '$author.username',
+      display_name: '$author.display_name',
+      avatar_url: '$author.avatar_url',
+      xp: '$author.xp',
+      level: '$author.level',
+      likes_count: { $size: { $ifNull: ['$likes', []] } },
+      liked_by_user: viewerId ? { $in: [viewerId, { $ifNull: ['$likes', []] }] } : false,
+    },
+  },
+];
 
 /** GET /api/posts - the community feed. Public, with like state when signed in. */
 router.get('/', optionalAuth, async (req: Request, res: Response) => {
@@ -48,22 +67,15 @@ router.get('/', optionalAuth, async (req: Request, res: Response) => {
     const limit = Math.min(parseInt(String(req.query.limit ?? '20'), 10) || 20, 50);
     const offset = Math.max(parseInt(String(req.query.offset ?? '0'), 10) || 0, 0);
 
-    const result = await query(
-      `SELECT p.*, u.username, u.display_name, u.avatar_url, u.xp, u.level,
-              COUNT(pl.id) AS likes_count,
-              BOOL_OR(pl.user_id = $1) AS liked_by_user
-       FROM posts p
-       JOIN users u ON p.user_id = u.id
-       LEFT JOIN post_likes pl ON pl.post_id = p.id
-       -- Posts from throwaway guest sessions are not shown to the community.
-       WHERE u.is_guest = FALSE
-       GROUP BY p.id, u.id
-       ORDER BY p.created_at DESC
-       LIMIT $2 OFFSET $3`,
-      [req.userId ?? null, limit, offset]
-    );
+    const rows = await Post.aggregate([
+      // Posts from throwaway guest sessions are not shown to the community.
+      ...feedPipeline({}, req.userId ?? null),
+      { $match: { is_guest: false } },
+      { $skip: offset },
+      { $limit: limit },
+    ]);
 
-    return res.json(result.rows.map(shapePost));
+    return res.json(rows.map(shapePost));
   } catch (error) {
     console.error('Get posts error:', error);
     return res.status(500).json({ error: 'Internal server error' });
@@ -78,9 +90,7 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
 
     const type = (body.type ?? 'general') as PostType;
     if (!POST_TYPES.includes(type)) {
-      return res
-        .status(400)
-        .json({ error: `type must be one of: ${POST_TYPES.join(', ')}` });
+      return res.status(400).json({ error: `type must be one of: ${POST_TYPES.join(', ')}` });
     }
 
     const caption = typeof body.caption === 'string' ? body.caption.trim() : '';
@@ -102,22 +112,35 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Write something before posting' });
     }
 
-    const postId = uuidv4();
-    await query(
-      `INSERT INTO posts (id, user_id, type, content, caption) VALUES ($1, $2, $3, $4, $5)`,
-      [postId, userId, type, JSON.stringify(content), caption || null]
-    );
+    const post = await Post.create({
+      user_id: userId,
+      type,
+      content,
+      caption: caption || null,
+      likes: [],
+    });
 
-    const created = await query(
-      `SELECT p.*, u.username, u.display_name, u.avatar_url, u.xp, u.level,
-              0 AS likes_count, FALSE AS liked_by_user
-       FROM posts p
-       JOIN users u ON p.user_id = u.id
-       WHERE p.id = $1`,
-      [postId]
-    );
+    const author = await User.findById(userId)
+      .select('username display_name avatar_url xp level')
+      .lean();
 
-    return res.status(201).json(shapePost(created.rows[0]));
+    return res.status(201).json(
+      shapePost({
+        id: String((post as any)._id),
+        type: (post as any).type,
+        content: (post as any).content,
+        caption: (post as any).caption,
+        created_at: (post as any).created_at,
+        likes_count: 0,
+        liked_by_user: false,
+        user_id: userId,
+        username: (author as any)?.username,
+        display_name: (author as any)?.display_name,
+        avatar_url: (author as any)?.avatar_url,
+        xp: (author as any)?.xp,
+        level: (author as any)?.level,
+      })
+    );
   } catch (error) {
     console.error('Create post error:', error);
     return res.status(500).json({ error: 'Could not share that. Please try again.' });
@@ -127,20 +150,11 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
 /** GET /api/posts/mine */
 router.get('/mine', authMiddleware, async (req: Request, res: Response) => {
   try {
-    const result = await query(
-      `SELECT p.*, u.username, u.display_name, u.avatar_url, u.xp, u.level,
-              COUNT(pl.id) AS likes_count,
-              BOOL_OR(pl.user_id = $1) AS liked_by_user
-       FROM posts p
-       JOIN users u ON p.user_id = u.id
-       LEFT JOIN post_likes pl ON pl.post_id = p.id
-       WHERE p.user_id = $1
-       GROUP BY p.id, u.id
-       ORDER BY p.created_at DESC
-       LIMIT 50`,
-      [req.userId]
-    );
-    return res.json(result.rows.map(shapePost));
+    const rows = await Post.aggregate([
+      ...feedPipeline({ user_id: req.userId }, req.userId!),
+      { $limit: 50 },
+    ]);
+    return res.json(rows.map(shapePost));
   } catch (error) {
     console.error('Get my posts error:', error);
     return res.status(500).json({ error: 'Internal server error' });
@@ -150,25 +164,19 @@ router.get('/mine', authMiddleware, async (req: Request, res: Response) => {
 /** POST /api/posts/:id/like - idempotent like. */
 router.post('/:id/like', authMiddleware, async (req: Request, res: Response) => {
   try {
-    const postId = req.params.id;
-    const userId = req.userId!;
+    const post = await Post.findByIdAndUpdate(
+      req.params.id,
+      { $addToSet: { likes: req.userId! } },
+      { new: true }
+    )
+      .select('likes')
+      .lean();
 
-    const exists = await query('SELECT 1 FROM posts WHERE id = $1', [postId]);
-    if (exists.rows.length === 0) {
+    if (!post) {
       return res.status(404).json({ error: 'Post not found' });
     }
 
-    await query(
-      `INSERT INTO post_likes (post_id, user_id) VALUES ($1, $2)
-       ON CONFLICT (post_id, user_id) DO NOTHING`,
-      [postId, userId]
-    );
-
-    const count = await query<{ count: string }>(
-      'SELECT COUNT(*) AS count FROM post_likes WHERE post_id = $1',
-      [postId]
-    );
-    return res.json({ liked: true, likes_count: parseInt(count.rows[0].count, 10) });
+    return res.json({ liked: true, likes_count: (post as any).likes?.length ?? 0 });
   } catch (error) {
     console.error('Like post error:', error);
     return res.status(500).json({ error: 'Internal server error' });
@@ -178,17 +186,19 @@ router.post('/:id/like', authMiddleware, async (req: Request, res: Response) => 
 /** DELETE /api/posts/:id/like - idempotent unlike. */
 router.delete('/:id/like', authMiddleware, async (req: Request, res: Response) => {
   try {
-    const postId = req.params.id;
-    await query('DELETE FROM post_likes WHERE post_id = $1 AND user_id = $2', [
-      postId,
-      req.userId,
-    ]);
+    const post = await Post.findByIdAndUpdate(
+      req.params.id,
+      { $pull: { likes: req.userId! } },
+      { new: true }
+    )
+      .select('likes')
+      .lean();
 
-    const count = await query<{ count: string }>(
-      'SELECT COUNT(*) AS count FROM post_likes WHERE post_id = $1',
-      [postId]
-    );
-    return res.json({ liked: false, likes_count: parseInt(count.rows[0].count, 10) });
+    if (!post) {
+      return res.status(404).json({ error: 'Post not found' });
+    }
+
+    return res.json({ liked: false, likes_count: (post as any).likes?.length ?? 0 });
   } catch (error) {
     console.error('Unlike post error:', error);
     return res.status(500).json({ error: 'Internal server error' });
@@ -198,23 +208,16 @@ router.delete('/:id/like', authMiddleware, async (req: Request, res: Response) =
 /** GET /api/posts/:id */
 router.get('/:id', optionalAuth, async (req: Request, res: Response) => {
   try {
-    const result = await query(
-      `SELECT p.*, u.username, u.display_name, u.avatar_url, u.xp, u.level,
-              COUNT(pl.id) AS likes_count,
-              BOOL_OR(pl.user_id = $1) AS liked_by_user
-       FROM posts p
-       JOIN users u ON p.user_id = u.id
-       LEFT JOIN post_likes pl ON pl.post_id = p.id
-       WHERE p.id = $2
-       GROUP BY p.id, u.id`,
-      [req.userId ?? null, req.params.id]
-    );
+    const rows = await Post.aggregate([
+      ...feedPipeline({ _id: req.params.id }, req.userId ?? null),
+      { $limit: 1 },
+    ]);
 
-    if (result.rows.length === 0) {
+    if (rows.length === 0) {
       return res.status(404).json({ error: 'Post not found' });
     }
 
-    return res.json(shapePost(result.rows[0]));
+    return res.json(shapePost(rows[0]));
   } catch (error) {
     console.error('Get post error:', error);
     return res.status(500).json({ error: 'Internal server error' });
@@ -224,12 +227,9 @@ router.get('/:id', optionalAuth, async (req: Request, res: Response) => {
 /** DELETE /api/posts/:id - author only. */
 router.delete('/:id', authMiddleware, async (req: Request, res: Response) => {
   try {
-    const result = await query(
-      'DELETE FROM posts WHERE id = $1 AND user_id = $2 RETURNING id',
-      [req.params.id, req.userId]
-    );
+    const result = await Post.deleteOne({ _id: req.params.id, user_id: req.userId });
 
-    if (result.rows.length === 0) {
+    if (result.deletedCount === 0) {
       return res.status(404).json({ error: 'Post not found, or it is not yours to delete' });
     }
 

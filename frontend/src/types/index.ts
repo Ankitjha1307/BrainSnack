@@ -75,7 +75,7 @@ export interface Quiz {
   questionCount: number;
   timePerQuestion: number;
   totalXP: number;
-  /** "ai" when Gemini/mock provider served it, "bank" when Postgres fallback did. */
+  /** "ai" when Gemini/mock provider served it, "bank" when the local question bank fallback did. */
   source?: "ai" | "bank";
   questions: Question[];
 }

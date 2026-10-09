@@ -7,7 +7,7 @@ BrainSnack is a social, AI-powered micro-learning platform designed for 2–5 mi
 ## Features
 
 - **Adaptive Learning Engine** — Tracks topic/concept mastery and adjusts difficulty in real-time
-- **AI-Powered Quiz Generation** — Gemini API integration with mock provider for development
+- **AI-Powered Quiz Generation** — In-process TypeScript provider (mock for offline dev, Gemini for production)
 - **Gamified Experience** — XP, streaks, levels, badges, and leaderboards
 - **Social Learning** — Achievement posts, likes, follows, and friend challenges
 - **Polished UI** — Modern, responsive, dark mode support
@@ -18,17 +18,16 @@ BrainSnack is a social, AI-powered micro-learning platform designed for 2–5 mi
 |-------|-----------|
 | Frontend | Next.js App Router + TypeScript + Tailwind CSS |
 | Backend | Node.js + Express + TypeScript |
-| AI Service | Python FastAPI + Google Gemini API |
-| Database | PostgreSQL |
-| Auth | JWT |
+| AI | In-process TypeScript provider (mock / Google Gemini) |
+| Database | MongoDB + Mongoose ODM |
+| Auth | JWT + guest sessions |
 
 ## Project Structure
 
 ```
 BrainSnack/
 ├── frontend/          # Next.js application
-├── backend/           # Node.js + Express API
-├── ai-service/        # Python FastAPI + Gemini service
+├── backend/           # Node.js + Express API (REST + in-process AI)
 └── README.md
 ```
 
@@ -37,19 +36,29 @@ BrainSnack/
 ### Prerequisites
 
 - Node.js 18+
-- Python 3.10+
-- PostgreSQL 14+
+- MongoDB 6+ running locally, or a MongoDB Atlas connection string
 
 ### 1. Database Setup
 
-```bash
-# Create database
-createdb brainsnack
+The backend ships a seed script that creates the collections and loads demo data.
+Point `MONGODB_URI` in `backend/.env` at your MongoDB instance first (see
+[Configuration](#configuration)), then run:
 
-# Run schema and seed data
-psql -d brainsnack -f backend/src/db/schema.sql
-psql -d brainsnack -f backend/src/db/seed.sql
+```bash
+cd backend
+npm install
+
+# Create collections + demo data (safe to re-run; clears collections first)
+npm run db:seed
+
+# Or drop the whole database and reseed from scratch
+npm run db:reset
 ```
+
+> The default connection string is a **mock/local** value:
+> `mongodb://127.0.0.1:27017/brainsnack`. It lives in two files — `backend/.env`
+> and `backend/.env.example` — and as the `MOCK_MONGODB_URI` fallback constant in
+> `backend/src/config/index.ts`. Replace it with your own MongoDB URI.
 
 ### 2. Backend Setup
 
@@ -62,18 +71,7 @@ npm run dev
 
 Runs on http://localhost:3001
 
-### 3. AI Service Setup
-
-```bash
-cd ai-service
-cp .env.example .env
-pip install -r requirements.txt
-uvicorn app.main:app --reload
-```
-
-Runs on http://localhost:8000
-
-### 4. Frontend Setup
+### 3. Frontend Setup
 
 ```bash
 cd frontend
@@ -84,21 +82,25 @@ npm run dev
 
 Runs on http://localhost:3000
 
-## AI Provider Configuration
+## Configuration
 
-The application works without any API keys using the mock provider.
+All configuration lives in `backend/.env` (copy from `.env.example`):
 
 ```env
-# ai-service/.env
+# Replace this MOCK CONNECTION STRING with your own MongoDB URI.
+# Local:  mongodb://127.0.0.1:27017/brainsnack
+# Atlas:  mongodb+srv://<user>:<password>@<cluster>.mongodb.net/brainsnack?retryWrites=true&w=majority
+MONGODB_URI=mongodb://127.0.0.1:27017/brainsnack
+
+# AI provider (served in-process by this REST API)
+# mock (default, offline) | gemini
 AI_PROVIDER=mock
+GEMINI_API_KEY=
+GEMINI_MODEL=gemini-1.5-flash
 ```
 
-To switch to Gemini:
-
-```env
-AI_PROVIDER=gemini
-GEMINI_API_KEY=your_api_key_here
-```
+The application works without any API keys using the mock provider. To switch to
+Gemini, set `AI_PROVIDER=gemini` and provide `GEMINI_API_KEY`.
 
 ## Demo Accounts
 
@@ -171,10 +173,11 @@ After seeding the database, five demo accounts exist. All use the password
 - `POST /api/users/:id/follow` — Follow
 - `DELETE /api/users/:id/follow` — Unfollow
 
-### AI Service
-- `POST /generate-quiz` — Generate quiz
-- `POST /validate-question` — Validate question
-- `POST /adaptive-recommendation` — Get recommendation
+### AI (in-process)
+- `GET /api/ai/health` — Active provider and status
+- `POST /api/ai/generate-quiz` — Generate quiz questions
+- `POST /api/ai/validate-question` — Validate a question
+- `POST /api/ai/adaptive-recommendation` — Get a recommendation
 
 ## MVP Phases
 

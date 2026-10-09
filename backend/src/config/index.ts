@@ -13,15 +13,26 @@ const corsOrigins = (process.env.CORS_ORIGIN || 'http://localhost:3000')
 
 const jwtSecret = process.env.JWT_SECRET || 'brainsnack-dev-secret-key-change-in-production';
 
+/**
+ * MOCK MONGODB CONNECTION STRING.
+ *
+ * This is the fallback used when `MONGODB_URI` is not set in the environment.
+ * It points at a local MongoDB instance. Change `MONGODB_URI` in `backend/.env`
+ * (or this constant) to your own MongoDB / Atlas connection string.
+ */
+const MOCK_MONGODB_URI = 'mongodb://127.0.0.1:27017/brainsnack';
+
 // Never let the shipped dev secret reach production - it is in git history and
 // anyone can mint a token for any account with it.
 if (isProduction && jwtSecret === 'brainsnack-dev-secret-key-change-in-production') {
   throw new Error('JWT_SECRET must be set to a unique value when NODE_ENV=production');
 }
 
-if (isProduction && !process.env.DATABASE_URL) {
-  throw new Error('DATABASE_URL must be set when NODE_ENV=production');
+if (isProduction && !process.env.MONGODB_URI) {
+  throw new Error('MONGODB_URI must be set when NODE_ENV=production');
 }
+
+const aiProvider = (process.env.AI_PROVIDER || 'mock').toLowerCase();
 
 export const config = {
   // 3001 so it never collides with the Next.js dev server on 3000.
@@ -29,11 +40,10 @@ export const config = {
   nodeEnv,
 
   database: {
-    url: process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/brainsnack',
-    // Max pooled connections. Lower it to 1 when the app talks to a
-    // single-connection Postgres (embedded PGlite, some proxies) so that
-    // concurrent transactions cannot interleave on one session.
-    poolMax: parseInt(process.env.DATABASE_POOL_MAX || '20', 10),
+    // See MOCK_MONGODB_URI above. Overridden by `MONGODB_URI` in the environment.
+    uri: process.env.MONGODB_URI || MOCK_MONGODB_URI,
+    // Give a slow local/Atlas connection room to come up before failing fast.
+    connectTimeoutMs: parseInt(process.env.MONGODB_CONNECT_TIMEOUT_MS || '10000', 10),
   },
 
   jwt: {
@@ -41,9 +51,13 @@ export const config = {
     expiresIn: process.env.JWT_EXPIRES_IN || '7d',
   },
 
-  aiService: {
-    url: process.env.AI_SERVICE_URL || 'http://localhost:8000',
-    timeout: parseInt(process.env.AI_SERVICE_TIMEOUT_MS || '10000', 10), // 10 seconds
+  ai: {
+    // AI is now served in-process by this REST API - there is no separate
+    // FastAPI service to call.
+    provider: aiProvider === 'gemini' ? ('gemini' as const) : ('mock' as const),
+    geminiApiKey: process.env.GEMINI_API_KEY || '',
+    geminiModel: process.env.GEMINI_MODEL || 'gemini-1.5-flash',
+    timeout: parseInt(process.env.AI_TIMEOUT_MS || '10000', 10),
   },
 
   cors: {
@@ -52,3 +66,5 @@ export const config = {
     origin: corsOrigins.length === 1 ? corsOrigins[0] : corsOrigins,
   },
 };
+
+export { MOCK_MONGODB_URI };
