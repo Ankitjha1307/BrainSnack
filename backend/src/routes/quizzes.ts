@@ -418,8 +418,23 @@ router.post('/:id/complete', authMiddleware, async (req: Request, res: Response)
       });
     }
 
-    const { total, correct } = await summarize(quizId);
-    const score = total > 0 ? Math.round((correct / total) * 100) : 0;
+   
+const { total, correct } = await summarize(quizId);
+
+const expectedQuestions =
+  Number((quiz as any).question_count) ||
+  ((quiz as any).question_ids?.length ?? 0);
+
+if (total < expectedQuestions) {
+  return res.status(400).json({
+    error: 'Answer all questions before completing the quiz',
+    answered_questions: total,
+    total_questions: expectedQuestions,
+  });
+}
+
+const score = total > 0 ? Math.round((correct / total) * 100) : 0;
+
 
     // XP is earned per question actually answered correctly, at that question's
     // difficulty.
