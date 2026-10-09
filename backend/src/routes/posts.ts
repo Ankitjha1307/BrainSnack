@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { authMiddleware, optionalAuth } from '../middleware/auth';
-import { Post, User } from '../models';
+import { Post, User, Follow } from '../models';
 
 const router = Router();
 
@@ -61,15 +61,32 @@ const feedPipeline = (match: Record<string, unknown>, viewerId: string | null): 
   },
 ];
 
-/** GET /api/posts - the community feed. Public, with like state when signed in. */
+/**
+ * GET /api/posts - the community feed. Public, with like state when signed in.
+ *
+ * `?scope=discover` (default) is the global feed; `?scope=following` narrows it
+ * to the people the viewer follows plus their own posts. Following requires a
+ * session - an empty feed would be indistinguishable from "you follow nobody",
+ * so anonymous callers get a 401 instead.
+ */
 router.get('/', optionalAuth, async (req: Request, res: Response) => {
   try {
     const limit = Math.min(parseInt(String(req.query.limit ?? '20'), 10) || 20, 50);
     const offset = Math.max(parseInt(String(req.query.offset ?? '0'), 10) || 0, 0);
+    const scope = req.query.scope === 'following' ? 'following' : 'discover';
+
+    let match: Record<string, unknown> = {};
+    if (scope === 'following') {
+      if (!req.userId) {
+        return res.status(401).json({ error: 'Sign in to see the people you follow' });
+      }
+      const followeeIds = await Follow.find({ follower_id: req.userId }).distinct('followee_id');
+      match = { user_id: { $in: [req.userId, ...followeeIds] } };
+    }
 
     const rows = await Post.aggregate([
+      ...feedPipeline(match, req.userId ?? null),
       // Posts from throwaway guest sessions are not shown to the community.
-      ...feedPipeline({}, req.userId ?? null),
       { $match: { is_guest: false } },
       { $skip: offset },
       { $limit: limit },

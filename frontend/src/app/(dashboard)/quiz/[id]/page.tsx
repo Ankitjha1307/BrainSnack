@@ -5,7 +5,9 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useResource } from "@/hooks/useResource";
 import { useQuiz } from "@/hooks/useQuiz";
 import { useAuth } from "@/context/AuthContext";
+import { useCompose } from "@/context/ComposeContext";
 import { challengesApi, quizzesApi } from "@/lib/api";
+import { milestoneFromChallengeWin, type Milestone } from "@/lib/milestones";
 import { QuizCard } from "@/components/quiz/quiz-card";
 import { QuestionCard } from "@/components/quiz/question-card";
 import { AnswerOptionRow } from "@/components/quiz/answer-option";
@@ -31,13 +33,15 @@ function QuizPlayer() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const quizId = params?.id as string | undefined;
-  const { refreshUser } = useAuth();
+  const { refreshUser, user } = useAuth();
+  const { openCompose } = useCompose();
 
   // A challenge round carries `?challenge=<id>`; finishing the quiz then submits
   // the real server-graded score as the challenge result.
   const challengeId = searchParams.get("challenge");
 
   const [challengeNote, setChallengeNote] = useState<string | null>(null);
+  const [challengeWin, setChallengeWin] = useState<Milestone | null>(null);
 
   const {
     data: quiz,
@@ -58,6 +62,19 @@ function QuizPlayer() {
           );
         } else if (submission.result === "draw") {
           setChallengeNote("It's a draw — you both scored the same.");
+        } else if (submission.winnerId && user && submission.winnerId === user.id) {
+          setChallengeNote("You won the challenge! 🏆");
+          const role = submission.challenge?.viewerRole;
+          const opponent =
+            role === "challenger"
+              ? submission.challenge?.challengee
+              : submission.challenge?.challenger;
+          setChallengeWin(
+            milestoneFromChallengeWin({
+              opponent: opponent?.displayName ?? opponent?.username ?? null,
+              score: submission.yourScore ?? null,
+            })
+          );
         } else {
           setChallengeNote("Challenge decided. Check the challenges page for the result.");
         }
@@ -70,7 +87,7 @@ function QuizPlayer() {
         );
       }
     },
-    [challengeId, refreshUser]
+    [challengeId, refreshUser, user]
   );
 
   const {
@@ -172,6 +189,22 @@ function QuizPlayer() {
             </CardContent>
           </Card>
         )}
+        {challengeWin && (
+          <Card className="border-accent-200 dark:border-accent-800">
+            <CardContent className="pt-5 flex items-center justify-between gap-3">
+              <p className="text-sm font-medium text-gray-900 dark:text-white">
+                You won the challenge! Share the bragging rights.
+              </p>
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => openCompose(challengeWin)}
+              >
+                Share 🎉
+              </Button>
+            </CardContent>
+          </Card>
+        )}
         <QuizResults
           result={result}
           topicName={quiz.topicName}
@@ -181,6 +214,7 @@ function QuizPlayer() {
           onRetake={() =>
             quiz.topicId ? router.push(`/topics/${quiz.topicId}`) : router.push("/topics")
           }
+          onShare={(milestone) => openCompose(milestone)}
         />
       </div>
     );

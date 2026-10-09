@@ -125,6 +125,10 @@ const mapUser = (row: any): User => ({
   personalBest: num(row.personal_best),
   joinedAt: row.created_at ?? "",
   isGuest: Boolean(row.is_guest),
+  // Present only on GET /users/:id; undefined elsewhere so callers can tell
+  // "not followed" apart from "field not provided".
+  isFollowing: row.is_following === undefined ? undefined : Boolean(row.is_following),
+  isMe: row.is_me === undefined ? undefined : Boolean(row.is_me),
 });
 
 const mapTopic = (row: any): Topic => ({
@@ -344,6 +348,18 @@ export const usersApi = {
     get<any[]>(`/users/search?q=${encodeURIComponent(query)}`).then((rows) =>
       rows.map((row) => ({ ...mapUser(row) }) as UserSearchResult)
     ),
+  suggestions: (): Promise<UserSearchResult[]> =>
+    get<any[]>("/users/suggestions").then((rows) =>
+      rows.map((row) => ({ ...mapUser(row) }) as UserSearchResult)
+    ),
+  followers: (id: string): Promise<UserSearchResult[]> =>
+    get<any[]>(`/users/${id}/followers`).then((rows) =>
+      rows.map((row) => ({ ...mapUser(row) }) as UserSearchResult)
+    ),
+  following: (id: string): Promise<UserSearchResult[]> =>
+    get<any[]>(`/users/${id}/following`).then((rows) =>
+      rows.map((row) => ({ ...mapUser(row) }) as UserSearchResult)
+    ),
   follow: (id: string) => post<{ following: boolean }>(`/users/${id}/follow`).then((r) => r.following),
   unfollow: (id: string) => del<{ following: boolean }>(`/users/${id}/follow`).then((r) => r.following),
 };
@@ -464,12 +480,19 @@ export const leaderboardApi = {
 };
 
 export const postsApi = {
-  feed: (limit = 20): Promise<Post[]> =>
-    get<any[]>(`/posts?limit=${limit}`).then((rows) => rows.map(mapPost)),
+  feed: (limit = 20, scope: "discover" | "following" = "discover"): Promise<Post[]> =>
+    get<any[]>(`/posts?limit=${limit}&scope=${scope}`).then((rows) => rows.map(mapPost)),
   mine: (): Promise<Post[]> => get<any[]>("/posts/mine").then((rows) => rows.map(mapPost)),
-  create: (data: { caption: string; type?: Post["type"] }): Promise<Post> =>
-    post<any>("/posts", { type: data.type ?? "general", caption: data.caption })
-      .then(mapPost),
+  create: (data: {
+    caption: string;
+    type?: Post["type"];
+    content?: Record<string, unknown>;
+  }): Promise<Post> =>
+    post<any>("/posts", {
+      type: data.type ?? "general",
+      caption: data.caption,
+      content: data.content,
+    }).then(mapPost),
   like: (id: string): Promise<{ liked: boolean; likesCount: number }> =>
     post<any>(`/posts/${id}/like`).then((r) => ({
       liked: Boolean(r.liked),

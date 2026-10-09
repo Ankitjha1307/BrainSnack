@@ -1,10 +1,13 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import type { Post } from "@/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
+import { MilestoneCard } from "./milestone-card";
 import { formatRelativeTime } from "@/lib/utils";
+import { milestoneFromPost } from "@/lib/milestones";
 
 interface PostCardProps {
   post: Post;
@@ -34,35 +37,55 @@ export function PostCard({ post, onLike, onUnlike }: PostCardProps) {
   };
 
   const body = postText(post);
+  const milestone = post.type !== "general" ? milestoneFromPost(post) : null;
 
   return (
     <Card>
       <CardContent className="pt-5">
         <div className="flex items-start gap-3">
-          <Avatar
-            src={post.author.avatarUrl ?? undefined}
-            alt={post.author.username}
-            size="md"
-          />
+          <Link href={`/u/${post.author.id}`} className="shrink-0">
+            <Avatar
+              src={post.author.avatarUrl ?? undefined}
+              alt={post.author.username}
+              size="md"
+            />
+          </Link>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <span className="font-semibold text-gray-900 dark:text-white">
+              <Link
+                href={`/u/${post.author.id}`}
+                className="font-semibold text-gray-900 hover:underline dark:text-white"
+              >
                 {post.author.displayName || post.author.username}
-              </span>
+              </Link>
               <span className="text-sm text-gray-400 dark:text-gray-500">
                 {formatRelativeTime(post.createdAt)}
               </span>
             </div>
-            {post.caption && (
-              <div className="mt-1 inline-flex items-center gap-1 px-2 py-0.5 bg-accent-100 dark:bg-accent-900/30 rounded-full text-xs font-medium text-accent-700 dark:text-accent-300">
-                <span>🏆</span>
-                {post.caption}
+
+            {milestone ? (
+              <div className="mt-3 space-y-2">
+                <MilestoneCard milestone={milestone} user={post.author} variant="feed" />
+                {post.caption && (
+                  <p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                    {post.caption}
+                  </p>
+                )}
               </div>
-            )}
-            {body && (
-              <p className="mt-2 text-gray-700 dark:text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">
-                {body}
-              </p>
+            ) : (
+              <>
+                {post.caption && (
+                  <div className="mt-1 inline-flex items-center gap-1 px-2 py-0.5 bg-accent-100 dark:bg-accent-900/30 rounded-full text-xs font-medium text-accent-700 dark:text-accent-300">
+                    <span>🏆</span>
+                    {post.caption}
+                  </div>
+                )}
+                {body && (
+                  <p className="mt-2 text-gray-700 dark:text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">
+                    {body}
+                  </p>
+                )}
+              </>
             )}
 
             <div className="flex items-center gap-4 mt-3">

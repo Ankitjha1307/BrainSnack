@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation";
 import { Navbar } from "@/components/layout/navbar";
 import { Sidebar } from "@/components/layout/sidebar";
 import { MobileNav } from "@/components/layout/mobile-nav";
+import { ComposeFab } from "@/components/community/compose-button";
+import { ComposeModal } from "@/components/community/compose-modal";
+import { ComposeProvider } from "@/context/ComposeContext";
 import { useAuth } from "@/context/AuthContext";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -33,15 +36,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   if (!isAuthenticated) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <Navbar />
-      <div className="flex">
-        <Sidebar />
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8">
-          {children}
-        </main>
+    <ComposeProvider>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <Navbar />
+        <div className="flex">
+          <Sidebar />
+          <main className="flex-1 p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8">
+            {children}
+          </main>
+        </div>
+        <MobileNav />
+        <ComposeFab />
+        <ComposeModal />
       </div>
-      <MobileNav />
-    </div>
+    </ComposeProvider>
   );
 }

@@ -20,6 +20,10 @@ export interface User {
   joinedAt: string;
   /** True for a throwaway "continue as guest" session. */
   isGuest?: boolean;
+  /** Viewer's follow state toward this user. Only sent by GET /users/:id. */
+  isFollowing?: boolean;
+  /** True when the profile belongs to the viewer. Only sent by GET /users/:id. */
+  isMe?: boolean;
 }
 
 export interface Topic {

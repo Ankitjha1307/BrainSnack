@@ -12,6 +12,8 @@ interface FeedListProps {
   isLoading?: boolean;
   error?: string | null;
   onRetry?: () => void;
+  /** Overrides the default "no posts" message (e.g. the Following cold-start). */
+  emptyState?: React.ReactNode;
 }
 
 export function FeedList({
@@ -21,6 +23,7 @@ export function FeedList({
   isLoading,
   error,
   onRetry,
+  emptyState,
 }: FeedListProps) {
   if (isLoading) {
     return (
@@ -50,6 +53,7 @@ export function FeedList({
   }
 
   if (posts.length === 0) {
+    if (emptyState) return <>{emptyState}</>;
     return (
       <div className="text-center py-12">
         <div className="text-4xl mb-3">📭</div>

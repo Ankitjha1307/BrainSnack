@@ -55,6 +55,36 @@ router.get('/search', authMiddleware, async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * GET /api/users/suggestions
+ *
+ * "Who to follow": the highest-XP learners the viewer is not already following.
+ * This is what fills the cold-start empty state for a brand-new account, which
+ * by definition follows nobody and would otherwise see a blank feed.
+ *
+ * NOTE: declared before `/:id` so "suggestions" is not parsed as a user id.
+ */
+router.get('/suggestions', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const viewerId = req.userId!;
+    const followeeIds = await Follow.find({ follower_id: viewerId }).distinct('followee_id');
+
+    const users = await UserModel.find({
+      is_guest: false,
+      _id: { $nin: [viewerId, ...followeeIds] },
+    })
+      .select(USER_PROJECTION)
+      .sort({ xp: -1 })
+      .limit(5)
+      .lean();
+
+    return res.json(users.map(toPublicUser));
+  } catch (error) {
+    console.error('Get user suggestions error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // GET /api/users/:id - public profile, plus the viewer's follow state.
 router.get('/:id', optionalAuth, async (req: Request, res: Response) => {
   try {

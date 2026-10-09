@@ -6,12 +6,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn, scoreColor } from "@/lib/utils";
+import { milestonesFromQuizResult, type Milestone } from "@/lib/milestones";
 
 interface QuizResultsProps {
   result: QuizResult;
   topicName: string;
   onRetake: () => void;
   onBack: () => void;
+  /** When provided, shows a "share your win" button for any milestone hit. */
+  onShare?: (milestone: Milestone) => void;
 }
 
 const gradeFor = (score: number) => {
@@ -21,10 +24,11 @@ const gradeFor = (score: number) => {
   return { label: "Keep going!", tone: "text-rose-600 dark:text-rose-400" };
 };
 
-export function QuizResults({ result, topicName, onRetake, onBack }: QuizResultsProps) {
+export function QuizResults({ result, topicName, onRetake, onBack, onShare }: QuizResultsProps) {
   const grade = gradeFor(result.score);
   const radius = 50;
   const circumference = 2 * Math.PI * radius;
+  const milestone = milestonesFromQuizResult(result)[0] ?? null;
 
   return (
     <Card padding="none" className="max-w-lg mx-auto animate-fade-in">
@@ -143,6 +147,12 @@ export function QuizResults({ result, topicName, onRetake, onBack }: QuizResults
               ))}
             </div>
           </div>
+        )}
+
+        {onShare && milestone && (
+          <Button variant="secondary" className="w-full" onClick={() => onShare(milestone)}>
+            🎉 Share your win
+          </Button>
         )}
 
         <div className="flex gap-3">

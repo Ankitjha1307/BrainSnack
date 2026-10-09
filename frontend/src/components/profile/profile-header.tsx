@@ -12,9 +12,11 @@ interface ProfileHeaderProps {
   user: User;
   isOwnProfile?: boolean;
   onEdit?: () => void;
+  /** Extra actions rendered on the right, e.g. a Follow button. */
+  actions?: React.ReactNode;
 }
 
-export function ProfileHeader({ user, isOwnProfile, onEdit }: ProfileHeaderProps) {
+export function ProfileHeader({ user, isOwnProfile, onEdit, actions }: ProfileHeaderProps) {
   return (
     <Card>
       <CardContent className="pt-6">
@@ -37,11 +39,12 @@ export function ProfileHeader({ user, isOwnProfile, onEdit }: ProfileHeaderProps
               </span>
             </div>
           </div>
-          {isOwnProfile && onEdit && (
-            <Button variant="outline" onClick={onEdit}>
-              Edit Profile
-            </Button>
-          )}
+          {actions ??
+            (isOwnProfile && onEdit && (
+              <Button variant="outline" onClick={onEdit}>
+                Edit Profile
+              </Button>
+            ))}
         </div>
       </CardContent>
     </Card>
