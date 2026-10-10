@@ -98,8 +98,8 @@ export default function ChallengesPage() {
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground dark:text-secondary-background">Challenges</h1>
-          <p className="text-surface-muted0 dark:text-muted mt-1">
+          <h1 className="text-2xl font-bold text-foreground">Challenges</h1>
+          <p className="text-muted mt-1">
             Head to head: whoever scores higher wins 100 XP
           </p>
         </div>
@@ -136,7 +136,7 @@ export default function ChallengesPage() {
         <div className="space-y-8">
           {incoming.length > 0 && (
             <section className="space-y-3">
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-surface-muted0 dark:text-muted">
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">
                 Waiting on you
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -170,7 +170,7 @@ export default function ChallengesPage() {
 
           {open.length > 0 && (
             <section className="space-y-3">
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-surface-muted0 dark:text-muted">
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">
                 In progress
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -178,7 +178,7 @@ export default function ChallengesPage() {
                   <div key={challenge.id} className="space-y-2">
                     <ChallengeCard challenge={challenge} />
                     {challenge.viewerHasSubmitted ? (
-                      <p className="text-xs text-center text-surface-muted0 dark:text-muted py-2">
+                      <p className="text-xs text-center text-muted py-2">
                         Your score is in. Waiting for your opponent.
                       </p>
                     ) : (
@@ -201,7 +201,7 @@ export default function ChallengesPage() {
 
           {finished.length > 0 && (
             <section className="space-y-3">
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-surface-muted0 dark:text-muted">
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">
                 Finished
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

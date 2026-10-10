@@ -11,12 +11,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, continueAsGuest } = useAuth();
+  const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [isStartingGuest, setIsStartingGuest] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,27 +32,8 @@ export default function LoginPage() {
     }
   };
 
-  const handleGuest = async () => {
-    setError("");
-    setIsStartingGuest(true);
-    try {
-      await continueAsGuest();
-      router.push("/dashboard");
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Could not start a guest session. Is the backend running?"
-      );
-    } finally {
-      setIsStartingGuest(false);
-    }
-  };
-
-  const busy = isLoading || isStartingGuest;
-
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-secondary-background to-primary-100 dark:from-foreground dark:via-foreground dark:to-primary-900/20 px-4 py-10">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-secondary-background to-primary-100 px-4 py-10">
       <div className="w-full max-w-md space-y-4">
         <Card>
           <CardHeader className="text-center">
@@ -61,14 +41,14 @@ export default function LoginPage() {
               <span className="text-secondary-background font-bold text-lg">BS</span>
             </div>
             <CardTitle className="text-2xl">Welcome back</CardTitle>
-            <p className="text-sm text-surface-muted0 dark:text-muted">
+            <p className="text-sm text-muted">
               Sign in to continue your learning streak
             </p>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               {error && (
-                <div className="p-3 bg-error dark:bg-error/20 border border-border dark:border-border rounded-lg text-sm text-foreground dark:text-foreground">
+                <div className="p-3 bg-error border border-border rounded-lg text-sm text-foreground">
                   {error}
                 </div>
               )}
@@ -81,7 +61,7 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 autoComplete="username"
                 required
-                disabled={busy}
+                disabled={isLoading}
               />
 
               <Input
@@ -92,46 +72,23 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="current-password"
                 required
-                disabled={busy}
+                disabled={isLoading}
               />
 
-              <Button type="submit" className="w-full" isLoading={isLoading} disabled={isStartingGuest}>
+              <Button type="submit" className="w-full" isLoading={isLoading}>
                 Sign In
               </Button>
             </form>
 
-            <p className="mt-6 text-center text-sm text-surface-muted0 dark:text-muted">
+            <p className="mt-6 text-center text-sm text-muted">
               Don&apos;t have an account?{" "}
               <Link
                 href="/register"
-                className="text-primary-600 dark:text-primary-400 font-medium hover:underline"
+                className="text-primary-600 font-medium hover:underline"
               >
                 Sign up
               </Link>
             </p>
-          </CardContent>
-        </Card>
-
-        {/* Guest is the primary path: every feature works without an account. */}
-        <Card>
-          <CardContent className="pt-5 text-center space-y-3">
-            <div>
-              <p className="font-medium text-foreground dark:text-secondary-background">Just looking around?</p>
-              <p className="text-sm text-surface-muted0 dark:text-muted mt-1">
-                Use every feature as a guest. No sign-up, no password. Your progress is saved
-                for this browser session.
-              </p>
-            </div>
-            <Button
-              variant="outline"
-              type="button"
-              className="w-full"
-              onClick={handleGuest}
-              isLoading={isStartingGuest}
-              disabled={isLoading}
-            >
-              Continue as Guest
-            </Button>
           </CardContent>
         </Card>
       </div>

@@ -11,12 +11,11 @@ import { StreakDisplay } from "@/components/dashboard/streak-display";
 import { TopicMasteryList } from "@/components/dashboard/topic-mastery-list";
 import { QuickStats } from "@/components/dashboard/quick-stats";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { ErrorState, SkeletonList } from "@/components/ui/state";
 import { formatRelativeTime, formatXP } from "@/lib/utils";
 
 export default function DashboardPage() {
-  const { user, isGuest } = useAuth();
+  const { user } = useAuth();
 
   const {
     data: progress,
@@ -57,20 +56,6 @@ export default function DashboardPage() {
             </svg>
           </Link>
         </div>
-
-        {isGuest && (
-          <div className="mt-5 flex flex-col sm:flex-row sm:items-center gap-3 rounded-xl bg-secondary-background/10 p-4">
-            <p className="text-sm text-primary-50 flex-1">
-              You&apos;re browsing as a guest. Everything works — create a free account to keep
-              your progress permanently.
-            </p>
-            <Link href="/register" className="shrink-0">
-              <Button size="sm" className="bg-secondary-background text-primary-700 hover:bg-primary-50">
-                Create account
-              </Button>
-            </Link>
-          </div>
-        )}
       </div>
 
       {error && <ErrorState message={error} onRetry={reload} />}
@@ -81,7 +66,7 @@ export default function DashboardPage() {
             {Array.from({ length: 4 }).map((_, i) => (
               <div
                 key={i}
-                className="h-24 bg-secondary-background dark:bg-foreground rounded-xl border border-surface-muted dark:border-foreground animate-pulse"
+                className="h-24 bg-secondary-background rounded-xl border border-surface-muted animate-pulse"
               />
             ))}
           </div>
@@ -116,25 +101,25 @@ export default function DashboardPage() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {progress.recentActivity.length === 0 ? (
-                    <p className="text-sm text-surface-muted0 dark:text-muted py-2">
+                    <p className="text-sm text-muted py-2">
                       No activity yet. Finish a quiz to see it here.
                     </p>
                   ) : (
                     progress.recentActivity.slice(0, 6).map((activity) => (
                       <div
                         key={activity.id}
-                        className="flex items-center justify-between py-2 border-b border-surface-muted dark:border-foreground last:border-0"
+                        className="flex items-center justify-between py-2 border-b border-surface-muted last:border-0"
                       >
                         <div className="min-w-0 pr-2">
-                          <p className="text-sm font-medium text-foreground dark:text-secondary-background truncate">
+                          <p className="text-sm font-medium text-foreground truncate">
                             {activity.reason}
                           </p>
-                          <p className="text-xs text-surface-muted0 dark:text-muted">
+                          <p className="text-xs text-muted">
                             {formatRelativeTime(activity.createdAt)}
                           </p>
                         </div>
                         {activity.amount !== 0 && (
-                          <span className="text-sm font-medium text-accent-600 dark:text-accent-400 shrink-0">
+                          <span className="text-sm font-medium text-accent-600 shrink-0">
                             {activity.amount > 0 ? "+" : ""}
                             {activity.amount} XP
                           </span>
@@ -151,25 +136,25 @@ export default function DashboardPage() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {progress.recentQuizzes.length === 0 ? (
-                    <p className="text-sm text-surface-muted0 dark:text-muted py-2">
+                    <p className="text-sm text-muted py-2">
                       No quizzes taken yet.
                     </p>
                   ) : (
                     progress.recentQuizzes.slice(0, 5).map((quiz) => (
                       <div
                         key={quiz.id}
-                        className="flex items-center justify-between py-2 border-b border-surface-muted dark:border-foreground last:border-0"
+                        className="flex items-center justify-between py-2 border-b border-surface-muted last:border-0"
                       >
                         <div className="min-w-0 pr-2">
-                          <p className="text-sm font-medium text-foreground dark:text-secondary-background truncate">
+                          <p className="text-sm font-medium text-foreground truncate">
                             {quiz.topicName ?? "Mixed quiz"}
                           </p>
-                          <p className="text-xs text-surface-muted0 dark:text-muted">
+                          <p className="text-xs text-muted">
                             {quiz.status === "completed" ? "Completed" : quiz.status} ·{" "}
                             {formatXP(quiz.xpEarned)} XP
                           </p>
                         </div>
-                        <span className="text-sm font-bold text-foreground dark:text-secondary-background shrink-0">
+                        <span className="text-sm font-bold text-foreground shrink-0">
                           {quiz.score}%
                         </span>
                       </div>

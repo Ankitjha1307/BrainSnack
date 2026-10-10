@@ -49,14 +49,15 @@ const feedPipeline = (match: Record<string, unknown>, viewerId: string | null): 
       caption: 1,
       created_at: 1,
       user_id: 1,
-      is_guest: '$author.is_guest',
       username: '$author.username',
       display_name: '$author.display_name',
       avatar_url: '$author.avatar_url',
       xp: '$author.xp',
       level: '$author.level',
       likes_count: { $size: { $ifNull: ['$likes', []] } },
-      liked_by_user: viewerId ? { $in: [viewerId, { $ifNull: ['$likes', []] }] } : false,
+      liked_by_user: viewerId
+        ? { $in: [viewerId, { $ifNull: ['$likes', []] }] }
+        : { $literal: false },
     },
   },
 ];
@@ -86,8 +87,6 @@ router.get('/', optionalAuth, async (req: Request, res: Response) => {
 
     const rows = await Post.aggregate([
       ...feedPipeline(match, req.userId ?? null),
-      // Posts from throwaway guest sessions are not shown to the community.
-      { $match: { is_guest: false } },
       { $skip: offset },
       { $limit: limit },
     ]);

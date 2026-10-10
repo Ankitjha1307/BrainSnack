@@ -14,10 +14,10 @@ export function QuizProgress({ current, total }: QuizProgressProps) {
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between text-sm">
-        <span className="font-medium text-foreground dark:text-muted">
+        <span className="font-medium text-foreground">
           Question {current} of {total}
         </span>
-        <span className="text-surface-muted0 dark:text-muted">
+        <span className="text-muted">
           {Math.round(percentage)}%
         </span>
       </div>

@@ -24,8 +24,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-3">
-          <div className="h-8 w-8 rounded-full border-2 border-border-200 border-t-primary-600 animate-spin" />
-          <p className="text-sm text-surface-muted0 dark:text-muted">Checking your session…</p>
+          <div className="h-8 w-8 rounded-full border-2 border-border border-t-primary-600 animate-spin" />
+          <p className="text-sm text-muted">Checking your session…</p>
         </div>
       </div>
     );

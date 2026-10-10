@@ -29,7 +29,7 @@ export function TopicMasteryList({ mastery }: TopicMasteryListProps) {
             action={
               <Link
                 href="/topics"
-                className="text-sm font-medium text-primary-600 dark:text-primary-400 hover:underline"
+                className="text-sm font-medium text-primary-600 hover:underline"
               >
                 Browse topics
               </Link>
@@ -45,16 +45,16 @@ export function TopicMasteryList({ mastery }: TopicMasteryListProps) {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 min-w-0">
                   <span aria-hidden>{topic.topicIcon}</span>
-                  <span className="text-sm font-medium text-foreground dark:text-muted truncate group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+                  <span className="text-sm font-medium text-foreground truncate group-hover:text-primary-600 transition-colors">
                     {topic.topicName}
                   </span>
                 </div>
-                <span className="text-sm font-medium text-surface-muted0 dark:text-muted shrink-0 ml-2">
+                <span className="text-sm font-medium text-muted shrink-0 ml-2">
                   {topic.mastery}%
                 </span>
               </div>
               <Progress value={topic.mastery} size="sm" />
-              <p className="text-xs text-muted dark:text-surface-muted0">
+              <p className="text-xs text-muted">
                 {topic.questionsCorrect}/{topic.questionsAttempted} correct
               </p>
             </Link>

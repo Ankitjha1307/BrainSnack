@@ -129,9 +129,8 @@ export const getLeaderboard = async (
     rows.forEach((row) => boardXp.set(row._id, row.total));
   }
 
-  // Public board: guests are excluded so throwaway sessions cannot drown out
-  // real learners.
-  const users = await User.find({ is_guest: false })
+  // Public board.
+  const users = await User.find({})
     .select('username display_name avatar_url xp level streak personal_best')
     .lean();
 
@@ -186,8 +185,6 @@ export const getLeaderboard = async (
 
   let userRank: ReturnType<typeof toEntry> | undefined;
   if (userId) {
-    // A guest is excluded from the board by design, so there is no rank to
-    // report for them. Leaving `userRank` undefined is the honest answer.
     const mine = ranked.find((entry) => entry.id === userId);
     if (mine) userRank = toEntry(mine);
   }

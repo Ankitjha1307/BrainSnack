@@ -124,7 +124,6 @@ const mapUser = (row: any): User => ({
   streak: num(row.streak),
   personalBest: num(row.personal_best),
   joinedAt: row.created_at ?? "",
-  isGuest: Boolean(row.is_guest),
   // Present only on GET /users/:id; undefined elsewhere so callers can tell
   // "not followed" apart from "field not provided".
   isFollowing: row.is_following === undefined ? undefined : Boolean(row.is_following),
@@ -309,16 +308,6 @@ export const authApi = {
   },
   async login(data: { email: string; password: string }) {
     const res = await post<{ user: any; token: string }>("/auth/login", data);
-    setStoredToken(res.token);
-    return mapUser(res.user);
-  },
-  /**
-   * Starts a throwaway session. The server creates a real, flagged user row and
-   * returns a normal token, so every API route works exactly as it does for a
-   * signed-up learner - no anonymous code path anywhere else.
-   */
-  async guest() {
-    const res = await post<{ user: any; token: string }>("/auth/guest");
     setStoredToken(res.token);
     return mapUser(res.user);
   },

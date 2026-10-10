@@ -21,7 +21,7 @@ const STATUS_STYLES: Record<Challenge["status"], { label: string; className: str
   },
   accepted: {
     label: "In progress",
-    className: "bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-200",
+    className: "bg-primary-100 text-primary-700",
   },
   completed: {
     label: "Completed",
@@ -67,10 +67,10 @@ export function ChallengeCard({
               size="md"
             />
             <div className="min-w-0">
-              <p className="font-medium text-foreground dark:text-secondary-background truncate">
+              <p className="font-medium text-foreground truncate">
                 {challenge.challenger.displayName || challenge.challenger.username}
               </p>
-              <p className="text-sm text-surface-muted0 dark:text-muted truncate">{challenge.topicName}</p>
+              <p className="text-sm text-muted truncate">{challenge.topicName}</p>
             </div>
           </div>
           <span
@@ -80,7 +80,7 @@ export function ChallengeCard({
           </span>
         </div>
 
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted dark:text-muted mb-4">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted mb-4">
           <span>Target: {challenge.targetScore} correct</span>
           <span>Started {formatDate(challenge.createdAt)}</span>
         </div>
@@ -92,7 +92,7 @@ export function ChallengeCard({
             return (
               <div
                 key={participant.id}
-                className="flex items-center gap-2 p-3 bg-surface-muted dark:bg-foreground/60 rounded-lg min-w-0"
+                className="flex items-center gap-2 p-3 bg-surface-muted rounded-lg min-w-0"
               >
                 <Avatar
                   src={participant.avatarUrl ?? undefined}
@@ -100,20 +100,20 @@ export function ChallengeCard({
                   size="sm"
                 />
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-foreground dark:text-secondary-background truncate">
+                  <p className="text-sm font-medium text-foreground truncate">
                     {participant.username}
                     {participant.id === challenge.challenger.id && (
                       <span className="ml-1 text-xs text-muted font-normal">challenger</span>
                     )}
                   </p>
-                  <p className="text-xs text-surface-muted0 dark:text-muted">
+                  <p className="text-xs text-muted">
                     {participant.score === null ? (
                       "No score yet"
                     ) : (
                       <>
                         {participant.score} correct
                         {reached && (
-                          <span className="ml-1 text-foreground dark:text-foreground font-medium">
+                          <span className="ml-1 text-foreground font-medium">
                             ✓
                           </span>
                         )}
@@ -139,21 +139,21 @@ export function ChallengeCard({
         )}
 
         {challenge.status === "accepted" && challenge.viewerHasSubmitted && (
-          <p className="text-center text-sm text-surface-muted0 dark:text-muted">
+          <p className="text-center text-sm text-muted">
             Waiting for the other player to finish
           </p>
         )}
 
         {challenge.status === "completed" && winner && (
-          <div className="text-center p-3 bg-surface-muted dark:bg-foreground/60 rounded-lg">
-            <p className="text-sm text-muted dark:text-muted">
+          <div className="text-center p-3 bg-surface-muted rounded-lg">
+            <p className="text-sm text-muted">
               Winner:{" "}
-              <span className="font-medium text-foreground dark:text-secondary-background">
+              <span className="font-medium text-foreground">
                 {winner.displayName || winner.username}
               </span>
             </p>
             {challenge.completedAt && (
-              <p className="text-xs text-surface-muted0 dark:text-muted mt-1">
+              <p className="text-xs text-muted mt-1">
                 Finished {formatDate(challenge.completedAt)}
               </p>
             )}

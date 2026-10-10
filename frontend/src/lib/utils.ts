@@ -67,7 +67,7 @@ export function avatarUrl(userId: string, seed: string): string {
 
 export function scoreColor(score: number): string {
   if (score >= 80) return "text-success";
-  if (score >= 60) return "text-primary-600 dark:text-primary-300";
+  if (score >= 60) return "text-primary-600";
   if (score >= 40) return "text-warning";
   return "text-error";
 }

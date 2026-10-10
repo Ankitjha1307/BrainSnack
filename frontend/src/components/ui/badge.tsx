@@ -21,7 +21,7 @@ export function Badge({
     success: "border-border bg-success/15 text-foreground",
     warning: "border-border bg-warning/15 text-foreground",
     danger: "border-border bg-error/15 text-foreground",
-    info: "border-border-700 bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-200",
+    info: "border-border bg-primary-100 text-primary-700",
     accent: "border-border bg-main text-main-foreground",
   };
 

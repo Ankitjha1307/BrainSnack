@@ -7,8 +7,8 @@ import {
   BookOpen,
   ChevronDown,
   Compass,
+  GraduationCap,
   Menu,
-  Moon,
   Swords,
   Trophy,
   X,
@@ -18,46 +18,20 @@ import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-const THEME_KEY = "brainsnack-theme";
-
 const navLinks = [
   { href: "/community", label: "Feed", icon: Compass },
   { href: "/topics", label: "Explore", icon: BookOpen },
-  { href: "/dashboard", label: "Learn", icon: BookOpen },
+  { href: "/dashboard", label: "Learn", icon: GraduationCap },
   { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
   { href: "/challenges", label: "Challenges", icon: Swords },
 ];
 
-const applyTheme = (dark: boolean) => {
-  document.documentElement.classList.toggle("dark", dark);
-  try {
-    window.localStorage.setItem(THEME_KEY, dark ? "dark" : "light");
-  } catch {
-    // Keep the current-page preference when browser storage is unavailable.
-  }
-};
-
 export function Navbar() {
-  const { user, isAuthenticated, isGuest, logout } = useAuth();
+  const { user, isAuthenticated, logout } = useAuth();
   const pathname = usePathname();
   const profileRef = useRef<HTMLDivElement>(null);
-  const [isDark, setIsDark] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  useEffect(() => {
-    let stored: string | null = null;
-    try {
-      stored = window.localStorage.getItem(THEME_KEY);
-    } catch {
-      stored = null;
-    }
-    // BrainSnack starts in the warmer, more readable light theme. A saved
-    // choice still wins on later visits.
-    const dark = stored === "dark";
-    setIsDark(dark);
-    document.documentElement.classList.toggle("dark", dark);
-  }, []);
 
   useEffect(() => {
     const closeOnOutsideClick = (event: MouseEvent) => {
@@ -71,12 +45,6 @@ export function Navbar() {
 
   const isActive = (href: string) =>
     pathname === href || (href !== "/dashboard" && pathname.startsWith(`${href}/`));
-
-  const toggleDark = () => {
-    const next = !isDark;
-    setIsDark(next);
-    applyTheme(next);
-  };
 
   return (
     <>
@@ -125,25 +93,6 @@ export function Navbar() {
                     >
                       View profile
                     </Link>
-                    {isGuest && (
-                      <Link
-                        href="/register"
-                        onClick={() => setProfileOpen(false)}
-                        className="block rounded-xl px-3 py-2.5 text-sm transition-colors hover:bg-surface-muted"
-                      >
-                        Save my progress
-                      </Link>
-                    )}
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={toggleDark}
-                      className="h-auto w-full justify-between rounded-base px-3 py-2.5 text-left text-sm shadow-none"
-                    >
-                      {isDark ? "Light theme" : "Dark theme"}
-                      <Moon className="h-4 w-4 text-muted" />
-                    </Button>
                     <Button
                       type="button"
                       variant="ghost"
@@ -151,7 +100,7 @@ export function Navbar() {
                       onClick={logout}
                       className="h-auto w-full justify-start rounded-base px-3 py-2.5 text-left text-sm text-foreground shadow-none"
                     >
-                      {isGuest ? "Exit guest session" : "Log out"}
+                      Log out
                     </Button>
                   </div>
                 )}
@@ -181,9 +130,9 @@ export function Navbar() {
                   key={link.href}
                   href={link.href}
                   className={cn(
-                    "group inline-flex items-center gap-2 rounded-full px-4 py-2.5 font-sans text-sm font-medium text-foreground/65 transition-colors hover:bg-secondary-background/70 hover:text-foreground dark:hover:bg-secondary-background/10",
+                    "group inline-flex items-center gap-2 rounded-full px-4 py-2.5 font-sans text-sm font-medium text-foreground/65 transition-colors hover:bg-secondary-background/70 hover:text-foreground",
                     isActive(link.href) &&
-                      "bg-primary-300 text-main-foreground shadow-sm hover:bg-primary-200 hover:text-main-foreground"
+                      "bg-main text-main-foreground shadow-sm hover:bg-primary-600 hover:text-main-foreground"
                   )}
                 >
                   <Icon className="h-4 w-4" strokeWidth={2} />
@@ -217,7 +166,7 @@ export function Navbar() {
                     onClick={() => setMobileMenuOpen(false)}
                     className={cn(
                       "inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-sm font-medium text-foreground/70",
-                      isActive(link.href) && "bg-primary-300 text-main-foreground"
+                      isActive(link.href) && "bg-main text-main-foreground"
                     )}
                   >
                     <Icon className="h-4 w-4" />

@@ -63,7 +63,7 @@ export function CreatePost({
               "text-xs",
               content.length >= MAX_LENGTH
                 ? "text-foreground"
-                : "text-muted dark:text-surface-muted0"
+                : "text-muted"
             )}
           >
             {content.length}/{MAX_LENGTH}

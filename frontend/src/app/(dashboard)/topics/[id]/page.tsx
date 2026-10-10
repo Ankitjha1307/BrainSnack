@@ -40,7 +40,7 @@ export default function TopicDetailPage() {
       <div className="max-w-2xl mx-auto">
         <ErrorState message={error} onRetry={reload} />
         <div className="mt-4 text-center">
-          <Link href="/topics" className="text-sm text-primary-600 dark:text-primary-400 hover:underline">
+          <Link href="/topics" className="text-sm text-primary-600 hover:underline">
             Back to topics
           </Link>
         </div>
@@ -53,7 +53,7 @@ export default function TopicDetailPage() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
-      <Link href="/topics" className="text-sm text-surface-muted0 dark:text-muted hover:underline">
+      <Link href="/topics" className="text-sm text-muted hover:underline">
         ← All topics
       </Link>
 
@@ -67,9 +67,9 @@ export default function TopicDetailPage() {
               <span aria-hidden>{topic.icon}</span>
             </div>
             <div className="min-w-0">
-              <h1 className="text-2xl font-bold text-foreground dark:text-secondary-background">{topic.name}</h1>
+              <h1 className="text-2xl font-bold text-foreground">{topic.name}</h1>
               {topic.description && (
-                <p className="text-muted dark:text-muted mt-1">{topic.description}</p>
+                <p className="text-muted mt-1">{topic.description}</p>
               )}
               <div className="flex flex-wrap gap-2 mt-3">
                 <Badge variant="default" size="sm">
@@ -96,30 +96,30 @@ export default function TopicDetailPage() {
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-surface-muted0 dark:text-muted">Mastery</span>
-              <span className="font-medium text-foreground dark:text-secondary-background">
+              <span className="text-muted">Mastery</span>
+              <span className="font-medium text-foreground">
                 {topicProgress.mastery}%
               </span>
             </div>
             <Progress value={topicProgress.mastery} />
             <div className="grid grid-cols-3 gap-4 text-center pt-1">
               <div>
-                <p className="text-lg font-bold text-foreground dark:text-secondary-background">
+                <p className="text-lg font-bold text-foreground">
                   {topicProgress.questionsAttempted}
                 </p>
-                <p className="text-xs text-surface-muted0 dark:text-muted">Attempted</p>
+                <p className="text-xs text-muted">Attempted</p>
               </div>
               <div>
-                <p className="text-lg font-bold text-foreground dark:text-secondary-background">
+                <p className="text-lg font-bold text-foreground">
                   {topicProgress.questionsCorrect}
                 </p>
-                <p className="text-xs text-surface-muted0 dark:text-muted">Correct</p>
+                <p className="text-xs text-muted">Correct</p>
               </div>
               <div>
-                <p className="text-lg font-bold text-foreground dark:text-secondary-background">
+                <p className="text-lg font-bold text-foreground">
                   {topicProgress.accuracy}%
                 </p>
-                <p className="text-xs text-surface-muted0 dark:text-muted">Accuracy</p>
+                <p className="text-xs text-muted">Accuracy</p>
               </div>
             </div>
           </CardContent>
@@ -132,7 +132,7 @@ export default function TopicDetailPage() {
         </CardHeader>
         <CardContent className="space-y-5">
           <div>
-            <p className="text-sm font-medium text-foreground dark:text-muted mb-2">
+            <p className="text-sm font-medium text-foreground mb-2">
               Difficulty
             </p>
             <div className="flex flex-wrap gap-2">
@@ -159,7 +159,7 @@ export default function TopicDetailPage() {
           </div>
 
           <div>
-            <p className="text-sm font-medium text-foreground dark:text-muted mb-2">
+            <p className="text-sm font-medium text-foreground mb-2">
               Questions
             </p>
             <div className="flex flex-wrap gap-2">
@@ -194,7 +194,7 @@ export default function TopicDetailPage() {
           />
 
           {topic.questionCount === 0 && (
-            <p className="text-sm text-foreground dark:text-foreground">
+            <p className="text-sm text-foreground">
               This topic has no questions in the bank yet, so a quiz cannot be generated.
             </p>
           )}

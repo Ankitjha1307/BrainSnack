@@ -10,7 +10,7 @@ import { useResource } from "@/hooks/useResource";
 import { useAuth } from "@/context/AuthContext";
 
 export default function LeaderboardPage() {
-  const { user, isGuest } = useAuth();
+  const { user } = useAuth();
   const [tab, setTab] = useState<"daily" | "weekly" | "alltime">("alltime");
 
   const {
@@ -23,8 +23,8 @@ export default function LeaderboardPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-foreground dark:text-secondary-background">Leaderboard</h1>
-        <p className="text-surface-muted0 dark:text-muted mt-1">
+        <h1 className="text-2xl font-bold text-foreground">Leaderboard</h1>
+        <p className="text-muted mt-1">
           See how you stack up against other learners
         </p>
       </div>
@@ -41,11 +41,7 @@ export default function LeaderboardPage() {
             <EmptyState
               icon="🏆"
               title="Nobody on this board yet"
-              description={
-                isGuest
-                  ? "Guest sessions are not ranked. Create an account to appear here."
-                  : "Finish a quiz to be the first on the board."
-              }
+              description="Finish a quiz to be the first on the board."
             />
           </CardContent>
         </Card>
@@ -55,19 +51,13 @@ export default function LeaderboardPage() {
         <>
           <LeaderboardTable entries={board.entries} currentUserId={user?.id} />
 
-          {board.myRank ? (
-            <Card className="border-border-200 dark:border-border-800">
+          {board.myRank && (
+            <Card className="border-border">
               <CardContent className="pt-5">
-                <p className="text-sm text-surface-muted0 dark:text-muted mb-3">Your position</p>
+                <p className="text-sm text-muted mb-3">Your position</p>
                 <LeaderboardTable entries={[board.myRank]} currentUserId={user?.id} />
               </CardContent>
             </Card>
-          ) : (
-            isGuest && (
-              <p className="text-center text-sm text-surface-muted0 dark:text-muted">
-                Guest sessions are not ranked. Create an account to join the leaderboard.
-              </p>
-            )
           )}
         </>
       )}

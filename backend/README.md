@@ -19,7 +19,7 @@ A gamified learning platform backend built with Node.js, Express, and TypeScript
 - **Framework**: Express 4
 - **Language**: TypeScript 5
 - **Database**: MongoDB + Mongoose ODM
-- **Auth**: JWT + bcryptjs (+ guest sessions)
+- **Auth**: JWT + bcryptjs
 - **AI**: In-process TypeScript provider (mock question bank / Google Gemini)
 
 ## Project Structure

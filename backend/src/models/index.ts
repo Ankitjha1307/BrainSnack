@@ -43,7 +43,6 @@ export interface IUser extends Document<string> {
   streak: number;
   last_active: Date | null;
   personal_best: number;
-  is_guest: boolean;
   created_at: Date;
   updated_at: Date;
 }
@@ -61,9 +60,6 @@ const userSchema = new Schema<IUser>(
     streak: { type: Number, default: 0 },
     last_active: { type: Date, default: null },
     personal_best: { type: Number, default: 0 },
-    // Throwaway accounts created by POST /api/auth/guest. They are hidden from
-    // public lists and cannot be signed into.
-    is_guest: { type: Boolean, default: false },
   },
   baseOptions
 );

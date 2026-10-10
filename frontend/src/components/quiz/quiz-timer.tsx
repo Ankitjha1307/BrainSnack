@@ -39,7 +39,7 @@ export function QuizTimer({ timeRemaining, totalTime }: QuizTimerProps) {
             fill="none"
             stroke="currentColor"
             strokeWidth="4"
-            className="text-surface-muted dark:text-foreground"
+            className="text-muted"
           />
           <circle
             cx="24"

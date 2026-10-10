@@ -1,7 +1,6 @@
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
-import { v4 as uuidv4 } from 'uuid';
-import { generateToken, generateGuestToken, authMiddleware } from '../middleware/auth';
+import { generateToken, authMiddleware } from '../middleware/auth';
 import { User as UserModel, Streak as StreakModel } from '../models';
 import { UserPublic, RegisterRequest, LoginRequest, AuthResponse } from '../types';
 
@@ -22,7 +21,6 @@ export const toPublicUser = (user: any): UserPublic => ({
   level: user.level,
   streak: user.streak,
   personal_best: user.personal_best,
-  is_guest: Boolean(user.is_guest),
   created_at: user.created_at,
 });
 
@@ -43,14 +41,9 @@ router.post('/register', async (req: Request, res: Response) => {
     if (!USERNAME_RE.test(username)) {
       fieldErrors.username =
         'Username must be 3-30 characters: lowercase letters, numbers or underscores';
-    } else if (username.startsWith('guest_')) {
-      // Reserved for POST /api/auth/guest so the two can never collide.
-      fieldErrors.username = 'That username is reserved';
     }
     if (!EMAIL_RE.test(email)) {
       fieldErrors.email = 'Enter a valid email address';
-    } else if (email.endsWith('@guest.brainsnack.local')) {
-      fieldErrors.email = 'That email domain is reserved';
     }
     if (password.length < MIN_PASSWORD_LENGTH) {
       fieldErrors.password = `Password must be at least ${MIN_PASSWORD_LENGTH} characters`;
@@ -114,12 +107,6 @@ router.post('/login', async (req: Request, res: Response) => {
       $or: [{ email: normalizedEmail }, { username: normalizedEmail }],
     });
 
-    // Guest rows have a random, unknown password. Reject them before the
-    // bcrypt comparison so the error message is accurate.
-    if (account?.is_guest) {
-      return res.status(401).json({ error: 'Guest sessions cannot be signed into. Continue as guest instead.' });
-    }
-
     // Always run a bcrypt comparison so a missing account and a wrong password
     // take the same time - otherwise response latency enumerates valid emails.
     const hash = account?.password_hash ?? DUMMY_HASH;
@@ -137,65 +124,6 @@ router.post('/login', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Login error:', error);
     return res.status(500).json({ error: 'Could not sign you in. Please try again.' });
-  }
-});
-
-/**
- * POST /api/auth/guest
- *
- * Creates a throwaway account and returns a guest session token. Guests are
- * real `users` documents rather than a parallel anonymous code path, so every
- * route (progress, XP, quizzes, challenges, posts) works for them with no
- * special casing anywhere else in the API. `is_guest` is what lets us hide them
- * from leaderboards and searches.
- *
- * The token is NOT a JWT: it is the literal string `guest_<user id>`, which the
- * auth middleware resolves directly. That is the "bypass all auth tokens"
- * behaviour - no secret, signature or expiry is involved.
- */
-router.post('/guest', async (_req: Request, res: Response) => {
-  try {
-    // A random suffix guarantees the unique username/email indexes are
-    // satisfied without a retry loop.
-    const suffix = uuidv4().replace(/-/g, '').slice(0, 12);
-    const username = `guest_${suffix}`;
-    const email = `guest_${suffix}@guest.brainsnack.local`;
-
-    // Random password nobody knows: guests can never be logged into, only used
-    // through the token issued below.
-    const passwordHash = await bcrypt.hash(uuidv4(), BCRYPT_ROUNDS);
-
-    let created;
-    try {
-      created = await UserModel.create({
-        username,
-        email,
-        password_hash: passwordHash,
-        display_name: 'Guest',
-        avatar_url: `https://api.dicebear.com/7.x/thumbs/svg?seed=${username}`,
-        is_guest: true,
-      });
-    } catch (error: any) {
-      // Astronomically unlikely, but a collision must not surface as a 500.
-      if (isDuplicateKey(error)) {
-        return res.status(409).json({ error: 'Could not start a guest session, please try again' });
-      }
-      throw error;
-    }
-
-    const user = created.toObject() as any;
-
-    await StreakModel.updateOne(
-      { user_id: user.id },
-      { $setOnInsert: { user_id: user.id, current_streak: 0, longest_streak: 0, last_activity_date: null } },
-      { upsert: true }
-    );
-
-    const response: AuthResponse = { user: toPublicUser(user), token: generateGuestToken(user) };
-    return res.status(201).json(response);
-  } catch (error) {
-    console.error('Guest session error:', error);
-    return res.status(500).json({ error: 'Could not start a guest session. Please try again.' });
   }
 });
 

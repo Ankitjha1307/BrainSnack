@@ -20,7 +20,7 @@ BrainSnack is a social, AI-powered micro-learning platform designed for 2–5 mi
 | Backend | Node.js + Express + TypeScript |
 | AI | In-process TypeScript provider (mock / Google Gemini) |
 | Database | MongoDB + Mongoose ODM |
-| Auth | JWT + guest sessions |
+| Auth | JWT |
 
 ## Project Structure
 
@@ -104,12 +104,9 @@ Gemini, set `AI_PROVIDER=gemini` and provide `GEMINI_API_KEY`.
 
 ## Demo Accounts
 
-Or skip auth entirely — the login page has a **Continue as Guest** button that
-creates a throwaway account. Guests can take quizzes and earn XP, but are
-excluded from the leaderboard, user search, and the public community feed.
-
 After seeding the database, five demo accounts exist. All use the password
-`password123`:
+`password123` and can take quizzes, earn XP, post to the community feed, and
+appear on the leaderboard:
 
 | Username | Email |
 |----------|-------|
@@ -124,7 +121,6 @@ After seeding the database, five demo accounts exist. All use the password
 ### Auth
 - `POST /api/auth/register` — Register
 - `POST /api/auth/login` — Login
-- `POST /api/auth/guest` — Create a throwaway guest account and log in
 - `GET /api/auth/me` — Current user
 - `POST /api/auth/logout` — Log out
 

@@ -6,7 +6,7 @@ import { toPublicUser } from './auth';
 
 const router = Router();
 
-const USER_PROJECTION = 'username display_name avatar_url xp level streak personal_best is_guest created_at';
+const USER_PROJECTION = 'username display_name avatar_url xp level streak personal_best created_at';
 
 const escapeRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -28,7 +28,6 @@ router.get('/me', authMiddleware, async (req: Request, res: Response) => {
  * GET /api/users/search?q=
  *
  * Escapes regex metacharacters so a search for "100%" is treated literally.
- * Guest rows are throwaway demo sessions; there is nobody to follow.
  */
 router.get('/search', authMiddleware, async (req: Request, res: Response) => {
   try {
@@ -40,7 +39,6 @@ router.get('/search', authMiddleware, async (req: Request, res: Response) => {
 
     const re = new RegExp(escapeRegex(q), 'i');
     const users = await UserModel.find({
-      is_guest: false,
       $or: [{ username: re }, { display_name: re }],
     })
       .select(USER_PROJECTION)
@@ -70,7 +68,6 @@ router.get('/suggestions', authMiddleware, async (req: Request, res: Response) =
     const followeeIds = await Follow.find({ follower_id: viewerId }).distinct('followee_id');
 
     const users = await UserModel.find({
-      is_guest: false,
       _id: { $nin: [viewerId, ...followeeIds] },
     })
       .select(USER_PROJECTION)
@@ -167,7 +164,6 @@ const relatedUsers = (localField: string, foreignField: string): PipelineStage[]
       level: '$user.level',
       streak: '$user.streak',
       personal_best: '$user.personal_best',
-      is_guest: '$user.is_guest',
       created_at: '$user.created_at',
     },
   },

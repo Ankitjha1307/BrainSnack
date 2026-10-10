@@ -46,12 +46,12 @@ export function ExplanationCard({
           <div
             className={cn(
               "h-10 w-10 rounded-full flex items-center justify-center flex-shrink-0",
-              isCorrect ? "bg-success dark:bg-success/30" : "bg-error dark:bg-error/30"
+              isCorrect ? "bg-success" : "bg-error"
             )}
           >
             {isCorrect ? (
               <svg
-                className="h-5 w-5 text-foreground dark:text-foreground"
+                className="h-5 w-5 text-foreground"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -60,7 +60,7 @@ export function ExplanationCard({
               </svg>
             ) : (
               <svg
-                className="h-5 w-5 text-foreground dark:text-foreground"
+                className="h-5 w-5 text-foreground"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -70,16 +70,16 @@ export function ExplanationCard({
             )}
           </div>
           <div>
-            <h3 className="font-semibold text-foreground dark:text-secondary-background">
+            <h3 className="font-semibold text-foreground">
               {isCorrect ? "Correct!" : "Not quite"}
             </h3>
-            <p className="text-sm text-surface-muted0 dark:text-muted">
+            <p className="text-sm text-muted">
               {isCorrect ? "Nice work." : "Here's why:"}
             </p>
           </div>
         </div>
 
-        <p className="text-sm font-medium text-foreground dark:text-muted mb-3">
+        <p className="text-sm font-medium text-foreground mb-3">
           {question.text}
         </p>
 
@@ -97,8 +97,8 @@ export function ExplanationCard({
         </div>
 
         {explanation && (
-          <div className="bg-surface-muted dark:bg-foreground/50 rounded-lg p-4 mb-4">
-            <p className="text-foreground dark:text-muted text-sm leading-relaxed">
+          <div className="bg-surface-muted rounded-lg p-4 mb-4">
+            <p className="text-foreground text-sm leading-relaxed">
               {explanation}
             </p>
           </div>
@@ -117,9 +117,9 @@ export function TimeUpCard({ onNext, isLast }: { onNext: () => void; isLast: boo
   return (
     <Card padding="none" className="animate-slide-up">
       <CardContent className="pt-6 text-center">
-        <div className="h-10 w-10 rounded-full bg-warning dark:bg-warning/30 mx-auto mb-3 flex items-center justify-center">
+        <div className="h-10 w-10 rounded-full bg-warning mx-auto mb-3 flex items-center justify-center">
           <svg
-            className="h-5 w-5 text-foreground dark:text-foreground"
+            className="h-5 w-5 text-foreground"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -132,8 +132,8 @@ export function TimeUpCard({ onNext, isLast }: { onNext: () => void; isLast: boo
             />
           </svg>
         </div>
-        <h3 className="font-semibold text-foreground dark:text-secondary-background">Time&apos;s up</h3>
-        <p className="text-sm text-surface-muted0 dark:text-muted mt-1">
+        <h3 className="font-semibold text-foreground">Time&apos;s up</h3>
+        <p className="text-sm text-muted mt-1">
           No answer was recorded for this question.
         </p>
         <Button onClick={onNext} className="w-full mt-4">

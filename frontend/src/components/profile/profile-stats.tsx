@@ -26,11 +26,11 @@ export function ProfileStats({ totalXP, level, streak, personalBest }: ProfileSt
           <CardContent className="pt-4 pb-3">
             <div className="flex items-center gap-2 mb-1">
               <span className="text-lg">{stat.icon}</span>
-              <span className="text-xs font-medium text-surface-muted0 dark:text-muted uppercase tracking-wide">
+              <span className="text-xs font-medium text-muted uppercase tracking-wide">
                 {stat.label}
               </span>
             </div>
-            <p className="text-xl font-bold text-foreground dark:text-secondary-background">{stat.value}</p>
+            <p className="text-xl font-bold text-foreground">{stat.value}</p>
           </CardContent>
         </Card>
       ))}

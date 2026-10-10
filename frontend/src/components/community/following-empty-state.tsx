@@ -12,13 +12,13 @@ import { WhoToFollow } from "./who-to-follow";
  */
 export function FollowingEmptyState({ onBrowse }: { onBrowse: () => void }) {
   return (
-    <div className="rounded-2xl border border-surface-muted dark:border-foreground bg-secondary-background dark:bg-foreground p-6">
+    <div className="rounded-2xl border border-surface-muted bg-secondary-background p-6">
       <div className="text-center">
         <div className="text-4xl mb-3" aria-hidden>
           🌱
         </div>
-        <p className="font-semibold text-foreground dark:text-secondary-background">Your feed is quiet</p>
-        <p className="mx-auto mt-1 max-w-sm text-sm text-surface-muted0 dark:text-muted">
+        <p className="font-semibold text-foreground">Your feed is quiet</p>
+        <p className="mx-auto mt-1 max-w-sm text-sm text-muted">
           Follow a few learners and their wins will show up here.
         </p>
       </div>

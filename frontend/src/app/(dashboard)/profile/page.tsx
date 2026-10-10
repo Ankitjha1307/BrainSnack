@@ -8,14 +8,14 @@ import { BadgeGrid } from "@/components/profile/badge-grid";
 import { TopicProgress } from "@/components/profile/topic-progress";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState, ErrorState, SkeletonList } from "@/components/ui/state";
-import { progressApi, postsApi } from "@/lib/api";
+import { progressApi } from "@/lib/api";
 import { useResource } from "@/hooks/useResource";
 import { useAuth } from "@/context/AuthContext";
 import { formatRelativeTime } from "@/lib/utils";
-import type { Post, UserProgress } from "@/types";
+import type { UserProgress } from "@/types";
 
 export default function ProfilePage() {
-  const { user, isGuest } = useAuth();
+  const { user } = useAuth();
 
   const {
     data: progress,
@@ -23,12 +23,6 @@ export default function ProfilePage() {
     error,
     reload,
   } = useResource<UserProgress>(() => progressApi.get(), []);
-
-  // Guests are excluded from the community feed, so only fetch their own posts.
-  const { data: myPosts } = useResource<Post[]>(
-    () => (isGuest ? postsApi.mine() : Promise.resolve([])),
-    [isGuest]
-  );
 
   if (isLoading) {
     return (
@@ -54,23 +48,6 @@ export default function ProfilePage() {
     <div className="max-w-4xl mx-auto space-y-6">
       <ProfileHeader user={user} />
 
-      {isGuest && (
-        <Card className="border-border dark:border-border">
-          <CardContent className="pt-5 flex flex-col sm:flex-row sm:items-center gap-3">
-            <p className="text-sm text-muted dark:text-muted flex-1">
-              You&apos;re signed in as a guest. Your progress lives in this browser session and
-              cannot be signed back into later.
-            </p>
-            <Link
-              href="/register"
-              className="shrink-0 text-sm font-medium text-primary-600 dark:text-primary-400 hover:underline"
-            >
-              Create an account to keep it →
-            </Link>
-          </CardContent>
-        </Card>
-      )}
-
       <ProfileStats
         totalXP={progress.totalXP}
         level={progress.level}
@@ -85,7 +62,7 @@ export default function ProfilePage() {
 
       <Card>
         <CardContent className="pt-5">
-          <h2 className="text-base font-semibold text-foreground dark:text-secondary-background mb-4">
+          <h2 className="text-base font-semibold text-foreground mb-4">
             Quiz history
           </h2>
           {progress.recentQuizzes.length === 0 ? (
@@ -96,7 +73,7 @@ export default function ProfilePage() {
               action={
                 <Link
                   href="/topics"
-                  className="text-sm font-medium text-primary-600 dark:text-primary-400 hover:underline"
+                  className="text-sm font-medium text-primary-600 hover:underline"
                 >
                   Browse topics
                 </Link>
@@ -107,20 +84,20 @@ export default function ProfilePage() {
               {progress.recentQuizzes.map((quiz) => (
                 <div
                   key={quiz.id}
-                  className="flex items-center justify-between py-2 border-b border-surface-muted dark:border-foreground last:border-0"
+                  className="flex items-center justify-between py-2 border-b border-surface-muted last:border-0"
                 >
                   <div className="min-w-0 pr-3">
-                    <p className="text-sm font-medium text-foreground dark:text-secondary-background truncate">
+                    <p className="text-sm font-medium text-foreground truncate">
                       {quiz.topicName ?? "Mixed quiz"}
                     </p>
-                    <p className="text-xs text-surface-muted0 dark:text-muted">
+                    <p className="text-xs text-muted">
                       {quiz.questionCount} questions ·{" "}
                       {quiz.completedAt ? formatRelativeTime(quiz.completedAt) : quiz.status}
                     </p>
                   </div>
                   <div className="text-right shrink-0">
-                    <p className="text-sm font-bold text-foreground dark:text-secondary-background">{quiz.score}%</p>
-                    <p className="text-xs text-accent-600 dark:text-accent-400">+{quiz.xpEarned} XP</p>
+                    <p className="text-sm font-bold text-foreground">{quiz.score}%</p>
+                    <p className="text-xs text-accent-600">+{quiz.xpEarned} XP</p>
                   </div>
                 </div>
               ))}
@@ -128,41 +105,6 @@ export default function ProfilePage() {
           )}
         </CardContent>
       </Card>
-
-      {isGuest && (
-        <Card>
-          <CardContent className="pt-5">
-            <h2 className="text-base font-semibold text-foreground dark:text-secondary-background mb-4">
-              Your posts
-            </h2>
-            {myPosts && myPosts.length > 0 ? (
-              <div className="space-y-3">
-                {myPosts.map((post) => {
-                  const text = typeof post.content?.text === "string" ? post.content.text : "";
-                  return (
-                    <div
-                      key={post.id}
-                      className="py-2 border-b border-surface-muted dark:border-foreground last:border-0"
-                    >
-                      <p className="text-sm text-foreground dark:text-muted">{text}</p>
-                      <p className="text-xs text-surface-muted0 dark:text-muted mt-1">
-                        {formatRelativeTime(post.createdAt)} · {post.likesCount} likes
-                      </p>
-                    </div>
-                  );
-                })}
-                <p className="text-xs text-muted dark:text-surface-muted0 pt-1">
-                  Guest posts are hidden from the public community feed.
-                </p>
-              </div>
-            ) : (
-              <p className="text-sm text-surface-muted0 dark:text-muted">
-                You haven&apos;t posted anything yet.
-              </p>
-            )}
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }

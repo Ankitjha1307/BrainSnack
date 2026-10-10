@@ -18,7 +18,7 @@ interface FeedTabsProps {
 /** X-style underlined tab bar for the feed scopes. */
 export function FeedTabs({ tabs, active, onChange }: FeedTabsProps) {
   return (
-    <div className="flex border-b border-surface-muted dark:border-foreground">
+    <div className="flex border-b border-surface-muted">
       {tabs.map((tab) => (
         <Button
           key={tab.id}

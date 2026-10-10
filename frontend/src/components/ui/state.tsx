@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 export function LoadingState({ label = "Loading…" }: { label?: string }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 gap-3">
-      <div className="h-8 w-8 animate-spin rounded-full border-2 border-border-200 border-t-primary-500" />
+      <div className="h-8 w-8 animate-spin rounded-full border-2 border-border border-t-primary-500" />
       <p className="text-sm text-muted">{label}</p>
     </div>
   );

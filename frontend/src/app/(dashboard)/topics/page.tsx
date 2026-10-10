@@ -21,8 +21,8 @@ export default function TopicsPage() {
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-foreground dark:text-secondary-background">Topics</h1>
-        <p className="text-surface-muted0 dark:text-muted mt-1">
+        <h1 className="text-2xl font-bold text-foreground">Topics</h1>
+        <p className="text-muted mt-1">
           Choose a topic to start learning
         </p>
       </div>
@@ -33,7 +33,7 @@ export default function TopicsPage() {
 
       {topics && topics.length === 0 && (
         <Card>
-          <CardContent className="pt-6 text-center text-sm text-surface-muted0 dark:text-muted">
+          <CardContent className="pt-6 text-center text-sm text-muted">
             No topics have been created yet. Run <code>npm run db:seed</code> in the
             backend to load them.
           </CardContent>
@@ -53,25 +53,25 @@ export default function TopicsPage() {
                     <span aria-hidden>{topic.icon}</span>
                   </div>
                   <div className="min-w-0">
-                    <h3 className="font-semibold text-foreground dark:text-secondary-background truncate group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+                    <h3 className="font-semibold text-foreground truncate group-hover:text-primary-600 transition-colors">
                       {topic.name}
                     </h3>
-                    <p className="text-xs text-surface-muted0 dark:text-muted">
+                    <p className="text-xs text-muted">
                       {topic.questionCount} questions
                     </p>
                   </div>
                 </div>
 
                 {topic.description && (
-                  <p className="text-sm text-muted dark:text-muted mb-4 line-clamp-2">
+                  <p className="text-sm text-muted mb-4 line-clamp-2">
                     {topic.description}
                   </p>
                 )}
 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-surface-muted0 dark:text-muted">Mastery</span>
-                    <span className="font-medium text-foreground dark:text-secondary-background">
+                    <span className="text-muted">Mastery</span>
+                    <span className="font-medium text-foreground">
                       {topic.mastery === null ? "Not started" : `${topic.mastery}%`}
                     </span>
                   </div>

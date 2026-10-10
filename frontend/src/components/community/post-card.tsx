@@ -55,11 +55,11 @@ export function PostCard({ post, onLike, onUnlike }: PostCardProps) {
             <div className="flex items-center gap-2">
               <Link
                 href={`/u/${post.author.id}`}
-                className="font-semibold text-foreground hover:underline dark:text-secondary-background"
+                className="font-semibold text-foreground hover:underline"
               >
                 {post.author.displayName || post.author.username}
               </Link>
-              <span className="text-sm text-muted dark:text-surface-muted0">
+              <span className="text-sm text-muted">
                 {formatRelativeTime(post.createdAt)}
               </span>
             </div>
@@ -68,7 +68,7 @@ export function PostCard({ post, onLike, onUnlike }: PostCardProps) {
               <div className="mt-3 space-y-2">
                 <MilestoneCard milestone={milestone} user={post.author} variant="feed" />
                 {post.caption && (
-                  <p className="text-sm leading-relaxed text-foreground dark:text-muted secondary-backgroundspace-pre-wrap">
+                  <p className="text-sm leading-relaxed text-foreground whitespace-pre-wrap">
                     {post.caption}
                   </p>
                 )}
@@ -76,13 +76,13 @@ export function PostCard({ post, onLike, onUnlike }: PostCardProps) {
             ) : (
               <>
                 {post.caption && (
-                  <div className="mt-1 inline-flex items-center gap-1 px-2 py-0.5 bg-accent-100 dark:bg-accent-900/30 rounded-full text-xs font-medium text-accent-700 dark:text-accent-300">
+                  <div className="mt-1 inline-flex items-center gap-1 px-2 py-0.5 bg-accent-100 rounded-full text-xs font-medium text-accent-700">
                     <span>🏆</span>
                     {post.caption}
                   </div>
                 )}
                 {body && (
-                  <p className="mt-2 text-foreground dark:text-muted text-sm leading-relaxed secondary-backgroundspace-pre-wrap">
+                  <p className="mt-2 text-foreground text-sm leading-relaxed whitespace-pre-wrap">
                     {body}
                   </p>
                 )}

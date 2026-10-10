@@ -12,7 +12,6 @@ export interface User {
   streak: number;
   last_active: string | null;
   personal_best: number;
-  is_guest: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -26,8 +25,6 @@ export interface UserPublic {
   level: number;
   streak: number;
   personal_best: number;
-  /** True for throwaway accounts created by POST /api/auth/guest. */
-  is_guest: boolean;
   created_at: string;
 }
 

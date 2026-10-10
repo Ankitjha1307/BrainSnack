@@ -31,14 +31,14 @@ export function FeedList({
         {[1, 2, 3].map((i) => (
           <div
             key={i}
-            className="bg-secondary-background dark:bg-foreground rounded-xl border border-surface-muted dark:border-foreground p-5 animate-pulse"
+            className="bg-secondary-background rounded-xl border border-surface-muted p-5 animate-pulse"
           >
             <div className="flex items-start gap-3">
-              <div className="h-10 w-10 rounded-full bg-surface-muted dark:bg-foreground" />
+              <div className="h-10 w-10 rounded-full bg-surface-muted" />
               <div className="flex-1 space-y-2">
-                <div className="h-4 bg-surface-muted dark:bg-foreground rounded w-1/4" />
-                <div className="h-3 bg-surface-muted dark:bg-foreground rounded w-3/4" />
-                <div className="h-3 bg-surface-muted dark:bg-foreground rounded w-1/2" />
+                <div className="h-4 bg-surface-muted rounded w-1/4" />
+                <div className="h-3 bg-surface-muted rounded w-3/4" />
+                <div className="h-3 bg-surface-muted rounded w-1/2" />
               </div>
             </div>
           </div>
@@ -57,7 +57,7 @@ export function FeedList({
     return (
       <div className="text-center py-12">
         <div className="text-4xl mb-3">📭</div>
-        <p className="text-surface-muted0 dark:text-muted">No posts yet. Be the first to share!</p>
+        <p className="text-muted">No posts yet. Be the first to share!</p>
       </div>
     );
   }

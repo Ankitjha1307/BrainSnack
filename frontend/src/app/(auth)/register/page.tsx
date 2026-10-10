@@ -47,21 +47,21 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-secondary-background to-primary-100 dark:from-foreground dark:via-foreground dark:to-primary-900/20 px-4 py-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-secondary-background to-primary-100 px-4 py-8">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center mx-auto mb-4">
             <span className="text-secondary-background font-bold text-lg">BS</span>
           </div>
           <CardTitle className="text-2xl">Create your account</CardTitle>
-          <p className="text-sm text-surface-muted0 dark:text-muted">
+          <p className="text-sm text-muted">
             Start your learning journey today
           </p>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="p-3 bg-error dark:bg-error/20 border border-border dark:border-border rounded-lg text-sm text-foreground dark:text-foreground">
+              <div className="p-3 bg-error border border-border rounded-lg text-sm text-foreground">
                 {error}
               </div>
             )}
@@ -110,10 +110,10 @@ export default function RegisterPage() {
           <div className="mt-6">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-surface-muted dark:border-foreground" />
+                <div className="w-full border-t border-surface-muted" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-secondary-background dark:bg-foreground text-surface-muted0 dark:text-muted">
+                <span className="px-2 bg-secondary-background text-muted">
                   Or continue with
                 </span>
               </div>
@@ -138,9 +138,9 @@ export default function RegisterPage() {
             </div>
           </div>
 
-          <p className="mt-6 text-center text-sm text-surface-muted0 dark:text-muted">
+          <p className="mt-6 text-center text-sm text-muted">
             Already have an account?{" "}
-            <Link href="/login" className="text-primary-600 dark:text-primary-400 font-medium hover:underline">
+            <Link href="/login" className="text-primary-600 font-medium hover:underline">
               Sign in
             </Link>
           </p>

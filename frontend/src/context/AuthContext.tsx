@@ -15,18 +15,10 @@ import { authApi, ApiError, getStoredToken } from "@/lib/api";
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
-  /** True when there is *any* usable session, guest or registered. */
+  /** True when there is a usable session. */
   isAuthenticated: boolean;
-  /** True when the session came from "Continue as guest" rather than an account. */
-  isGuest: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (username: string, email: string, password: string) => Promise<void>;
-  /**
-   * Starts a throwaway session. Guests get a real row and token on the server,
-   * so the whole app works exactly as it does for a registered learner - they
-   * just cannot sign in again later or appear on the leaderboard.
-   */
-  continueAsGuest: () => Promise<void>;
   logout: () => void;
   /** Re-read the profile so XP/level/streak update after a quiz. */
   refreshUser: () => Promise<void>;
@@ -88,10 +80,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(await authApi.register({ username, email, password }));
   }, []);
 
-  const continueAsGuest = useCallback(async () => {
-    setUser(await authApi.guest());
-  }, []);
-
   const logout = useCallback(() => {
     authApi.logout();
     setUser(null);
@@ -102,14 +90,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       user,
       isLoading,
       isAuthenticated: Boolean(user),
-      isGuest: Boolean(user?.isGuest),
       login,
       register,
-      continueAsGuest,
       logout,
       refreshUser,
     }),
-    [user, isLoading, login, register, continueAsGuest, logout, refreshUser]
+    [user, isLoading, login, register, logout, refreshUser]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

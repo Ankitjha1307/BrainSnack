@@ -140,7 +140,7 @@ const start = async (): Promise<void> => {
         `      db       ${config.database.uri}`,
         `      ai       ${aiProvider.name}`,
         '',
-        '      POST   /api/auth/register | /api/auth/login | /api/auth/guest',
+        '      POST   /api/auth/register | /api/auth/login',
         '      GET    /health   (db + ai status)',
         '      GET    /api/topics',
         '      POST   /api/quizzes/generate',

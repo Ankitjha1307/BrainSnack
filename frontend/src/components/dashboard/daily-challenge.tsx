@@ -28,7 +28,7 @@ export function DailyChallenge() {
   );
 
   return (
-    <Card className="overflow-hidden border-2 border-border-200 dark:border-border-800">
+    <Card className="overflow-hidden border-2 border-border">
       <div className="h-1.5 bg-gradient-to-r from-primary-500 via-primary-600 to-primary-700" />
       <CardContent className="pt-5">
         <div className="flex items-start justify-between mb-3 gap-3">
@@ -36,19 +36,19 @@ export function DailyChallenge() {
             <Badge variant="accent" size="sm">
               Daily Challenge
             </Badge>
-            <h3 className="text-lg font-bold text-foreground dark:text-secondary-background mt-2">
+            <h3 className="text-lg font-bold text-foreground mt-2">
               Mixed 5-question sprint
             </h3>
-            <p className="text-sm text-surface-muted0 dark:text-muted">
+            <p className="text-sm text-muted">
               Drawn from every topic you can access
             </p>
           </div>
-          <div className="h-12 w-12 rounded-xl bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center shrink-0">
+          <div className="h-12 w-12 rounded-xl bg-primary-100 flex items-center justify-center shrink-0">
             <span className="text-2xl">⚡</span>
           </div>
         </div>
 
-        <div className="flex items-center gap-4 mb-4 text-sm text-muted dark:text-muted">
+        <div className="flex items-center gap-4 mb-4 text-sm text-muted">
           <span className="flex items-center gap-1">
             <svg
               className="h-4 w-4"
@@ -87,10 +87,10 @@ export function DailyChallenge() {
 
         {completedToday ? (
           <div className="text-center py-2">
-            <p className="text-sm font-medium text-foreground dark:text-foreground">
+            <p className="text-sm font-medium text-foreground">
               ✓ Challenge complete for today
             </p>
-            <p className="text-xs text-surface-muted0 dark:text-muted mt-1">
+            <p className="text-xs text-muted mt-1">
               Come back tomorrow for a new one.
             </p>
           </div>

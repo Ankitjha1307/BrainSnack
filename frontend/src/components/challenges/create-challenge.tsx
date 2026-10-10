@@ -71,7 +71,7 @@ export function CreateChallenge({ onSubmit, onCancel }: CreateChallengeProps) {
         <div>
           <label
             htmlFor="challenge-opponent"
-            className="block text-sm font-medium text-foreground dark:text-muted mb-1.5"
+            className="block text-sm font-medium text-foreground mb-1.5"
           >
             Challenge someone
           </label>
@@ -83,13 +83,13 @@ export function CreateChallenge({ onSubmit, onCancel }: CreateChallengeProps) {
             disabled={Boolean(selectedOpponent)}
           />
           {selectedOpponent ? (
-            <div className="mt-2 flex items-center gap-2 p-2 bg-primary-50 dark:bg-primary-900/20 rounded-lg">
+            <div className="mt-2 flex items-center gap-2 p-2 bg-primary-50 rounded-lg">
               <Avatar
                 src={selectedOpponent.avatarUrl ?? undefined}
                 alt={selectedOpponent.username}
                 size="sm"
               />
-              <span className="text-sm font-medium text-primary-700 dark:text-primary-300 truncate">
+              <span className="text-sm font-medium text-primary-700 truncate">
                 {selectedOpponent.username}
               </span>
               <Button
@@ -121,10 +121,10 @@ export function CreateChallenge({ onSubmit, onCancel }: CreateChallengeProps) {
             </div>
           ) : (
             opponentSearch.trim().length >= 2 && (
-              <div className="mt-2 border border-surface-muted dark:border-foreground rounded-lg overflow-hidden max-h-48 overflow-y-auto">
-                {isSearching && <p className="p-3 text-sm text-surface-muted0">Searching…</p>}
+              <div className="mt-2 border border-surface-muted rounded-lg overflow-hidden max-h-48 overflow-y-auto">
+                {isSearching && <p className="p-3 text-sm text-muted">Searching…</p>}
                 {!isSearching && results?.length === 0 && (
-                  <p className="p-3 text-sm text-surface-muted0 dark:text-muted">No users found</p>
+                  <p className="p-3 text-sm text-muted">No users found</p>
                 )}
                 {results?.map((user) => (
                   <Button
@@ -139,7 +139,7 @@ export function CreateChallenge({ onSubmit, onCancel }: CreateChallengeProps) {
                     className="h-auto w-full justify-start rounded-none p-3 text-left shadow-none"
                   >
                     <Avatar src={user.avatarUrl ?? undefined} alt={user.username} size="sm" />
-                    <span className="text-sm font-medium text-foreground dark:text-secondary-background truncate">
+                    <span className="text-sm font-medium text-foreground truncate">
                       {user.username}
                     </span>
                   </Button>
@@ -151,7 +151,7 @@ export function CreateChallenge({ onSubmit, onCancel }: CreateChallengeProps) {
 
         {/* Topic selection */}
         <div>
-          <p className="block text-sm font-medium text-foreground dark:text-muted mb-1.5">
+          <p className="block text-sm font-medium text-foreground mb-1.5">
             Topic
           </p>
           <div className="grid grid-cols-2 gap-2">
@@ -165,7 +165,7 @@ export function CreateChallenge({ onSubmit, onCancel }: CreateChallengeProps) {
               <span className="text-lg" aria-hidden>
                 🎲
               </span>
-              <span className="text-sm font-medium text-foreground dark:text-secondary-background">Any topic</span>
+              <span className="text-sm font-medium text-foreground">Any topic</span>
             </Button>
             {topics?.slice(0, 5).map((topic) => (
               <Button
@@ -179,7 +179,7 @@ export function CreateChallenge({ onSubmit, onCancel }: CreateChallengeProps) {
                 <span className="text-lg" aria-hidden>
                   {topic.icon}
                 </span>
-                <span className="text-sm font-medium text-foreground dark:text-secondary-background truncate">
+                <span className="text-sm font-medium text-foreground truncate">
                   {topic.name}
                 </span>
               </Button>
@@ -189,7 +189,7 @@ export function CreateChallenge({ onSubmit, onCancel }: CreateChallengeProps) {
 
         {/* Target score */}
         <div>
-          <p className="block text-sm font-medium text-foreground dark:text-muted mb-1.5">
+          <p className="block text-sm font-medium text-foreground mb-1.5">
             Score to win (% correct)
           </p>
           <div className="flex gap-2">

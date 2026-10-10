@@ -64,7 +64,7 @@ export function AnswerOptionRow({
       >
         {LETTERS[index] ?? index + 1}
       </span>
-      <span className="flex-1 text-foreground dark:text-secondary-background font-medium">{text}</span>
+      <span className="flex-1 text-foreground font-medium">{text}</span>
       {state === "correct" && (
         <svg
           className="h-5 w-5 text-foreground flex-shrink-0"

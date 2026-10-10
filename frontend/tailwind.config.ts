@@ -1,6 +1,26 @@
 import type { Config } from "tailwindcss";
 
+/**
+ * A real orange ramp. Previously every step 50-900 was the same hex, so any
+ * "soft" usage (e.g. `bg-primary-100 text-primary-700`) rendered as solid
+ * orange on solid orange. The hue is unchanged - only the value steps differ.
+ */
+const orange = {
+  50: "#FFF4E6",
+  100: "#FFE4C4",
+  200: "#FFC98F",
+  300: "#FFAB5A",
+  400: "#FF8F2E",
+  500: "#FF7A05",
+  600: "#E56600",
+  700: "#B85000",
+  800: "#8A3B00",
+  900: "#5C2700",
+};
+
 const config: Config = {
+  // No dark theme ships. `class` is kept only so any stray `dark:` utility is
+  // inert (nothing ever adds the `.dark` class).
   darkMode: "class",
   content: ["./src/**/*.{js,ts,jsx,tsx,mdx}"],
   theme: {
@@ -11,6 +31,7 @@ const config: Config = {
         surface: "hsl(var(--surface))",
         "surface-muted": "hsl(var(--surface-muted))",
         border: "hsl(var(--border))",
+        ring: "hsl(var(--ring))",
         muted: "hsl(var(--text-muted))",
         success: "hsl(var(--success))",
         warning: "hsl(var(--warning))",
@@ -18,42 +39,24 @@ const config: Config = {
         main: "hsl(var(--main))",
         "main-foreground": "hsl(var(--main-foreground))",
         "secondary-background": "hsl(var(--secondary-background))",
-        primary: {
-          50: "#FF7A05",
-          100: "#FF7A05",
-          200: "#FF7A05",
-          300: "#FF7A05",
-          400: "#FF7A05",
-          500: "#FF7A05",
-          600: "#FF7A05",
-          700: "#FF7A05",
-          800: "#FF7A05",
-          900: "#FF7A05",
-        },
-        borderRadius: {
-          base: "5px",
-        },
-        boxShadow: {
-          shadow:           "2px 2px 0 hsl(var(--border))",
-        },
-        spacing: {
-          boxShadowX: "2px",
-          boxShadowY: "2px",
-          reverseBoxShadowX: "-2px",
-          reverseBoxShadowY: "-2px",
-        },
-        accent: {
-          50: "#FF7A05",
-          100: "#FF7A05",
-          200: "#FF7A05",
-          300: "#FF7A05",
-          400: "#FF7A05",
-          500: "#FF7A05",
-          600: "#FF7A05",
-          700: "#FF7A05",
-          800: "#FF7A05",
-          900: "#FF7A05",
-        },
+        primary: orange,
+        accent: orange,
+      },
+      // These three used to be nested *inside* `colors`, so `rounded-base`,
+      // `shadow-shadow` and the press-translate utilities were never emitted.
+      borderRadius: {
+        base: "10px",
+      },
+      boxShadow: {
+        shadow: "2px 2px 0 hsl(var(--border))",
+        "shadow-sm": "1px 1px 0 hsl(var(--border))",
+        "shadow-lg": "4px 4px 0 hsl(var(--border))",
+      },
+      spacing: {
+        boxShadowX: "2px",
+        boxShadowY: "2px",
+        reverseBoxShadowX: "-2px",
+        reverseBoxShadowY: "-2px",
       },
       fontFamily: {
         sans: ["var(--font-instrument-sans)", "Arial", "sans-serif"],
@@ -84,4 +87,5 @@ const config: Config = {
   },
   plugins: [],
 };
+
 export default config;
