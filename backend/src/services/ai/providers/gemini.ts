@@ -1,3 +1,4 @@
+
 import { config } from '../../../config/index';
 import {
   AIProvider,
@@ -11,7 +12,8 @@ import {
   QuizResponse,
 } from '../types';
 
-const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
+const GEMINI_BASE =
+  'https://generativelanguage.googleapis.com/v1beta/models';
 
 const isDifficulty = (value: unknown): value is Difficulty =>
   value === 'easy' || value === 'medium' || value === 'hard';
@@ -19,9 +21,8 @@ const isDifficulty = (value: unknown): value is Difficulty =>
 /**
  * Gemini provider.
  *
- * Talks to the Google Generative Language REST API directly with `fetch` rather
- * than pulling in a Python SDK or a second Node dependency. Only the small
- * surface the app needs is implemented.
+ * Uses Google's Generative Language REST API directly with fetch.
+ * Validates generated questions before returning them to the application.
  */
 export class GeminiAIProvider implements AIProvider {
   readonly name = 'gemini' as const;
@@ -31,17 +32,31 @@ export class GeminiAIProvider implements AIProvider {
 
   private async call(prompt: string): Promise<string> {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), config.ai.timeout);
+
+    const timeoutId = setTimeout(
+      () => controller.abort(),
+      config.ai.timeout
+    );
 
     try {
       const response = await fetch(
-        `${GEMINI_BASE}/${this.model}:generateContent?key=${encodeURIComponent(this.apiKey)}`,
+        `${GEMINI_BASE}/${this.model}:generateContent?key=${encodeURIComponent(
+          this.apiKey
+        )}`,
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+          },
           body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { temperature: 0.8 },
+            contents: [
+              {
+                parts: [{ text: prompt }],
+              },
+            ],
+            generationConfig: {
+              temperature: 0.8,
+            },
           }),
           signal: controller.signal,
         }
@@ -49,14 +64,31 @@ export class GeminiAIProvider implements AIProvider {
 
       if (!response.ok) {
         const body = await response.text().catch(() => '');
-        throw new Error(`Gemini returned ${response.status}${body ? `: ${body.slice(0, 300)}` : ''}`);
+
+        throw new Error(
+          `Gemini returned ${response.status}${
+            body ? `: ${body.slice(0, 300)}` : ''
+          }`
+        );
       }
 
       const data = (await response.json()) as {
-        candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+        candidates?: Array<{
+          content?: {
+            parts?: Array<{ text?: string }>;
+          };
+        }>;
       };
-      const text = data.candidates?.[0]?.content?.parts?.map((p) => p.text ?? '').join('') ?? '';
-      if (!text.trim()) throw new Error('Gemini returned an empty response');
+
+      const text =
+        data.candidates?.[0]?.content?.parts
+          ?.map((part) => part.text ?? '')
+          .join('') ?? '';
+
+      if (!text.trim()) {
+        throw new Error('Gemini returned an empty response');
+      }
+
       return text;
     } finally {
       clearTimeout(timeoutId);
@@ -64,12 +96,16 @@ export class GeminiAIProvider implements AIProvider {
   }
 
   async generateQuiz(request: QuizRequest): Promise<QuizResponse> {
-    const weakConcepts = request.weak_concepts?.length ? request.weak_concepts.join(', ') : 'none';
+    const weakConcepts = request.weak_concepts?.length
+      ? request.weak_concepts.join(', ')
+      : 'none';
+
     const recentMistakes = request.recent_mistakes?.length
       ? request.recent_mistakes.join(', ')
       : 'none';
 
     const prompt = `Generate a quiz with ${request.question_count} questions on the topic "${request.topic}".
+
 Difficulty level: ${request.difficulty}
 Weak concepts to focus on: ${weakConcepts}
 Recent mistakes to address: ${recentMistakes}
@@ -85,36 +121,101 @@ Return the response as a JSON object with this exact structure:
       "correctAnswer": 0,
       "explanation": "explanation text",
       "concept": "concept name",
-      "difficulty": "easy|medium|hard"
+      "difficulty": "${request.difficulty}"
     }
   ]
 }
 
 Important:
-- Each question must have exactly 4 options
-- correctAnswer must be an integer between 0 and 3
-- Questions should be clear and unambiguous
-- Explanations should be detailed and educational
-- Return ONLY the JSON object, no additional text`;
+- Generate exactly ${request.question_count} questions.
+- Every question must have exactly 4 non-empty options.
+- Options must be distinct.
+- correctAnswer must be an integer between 0 and 3.
+- The correctAnswer is a zero-based index into the options array.
+- The question, explanation, and concept must not be empty.
+- Questions must be clear, unambiguous, and educational.
+- Explanations should explain why the correct answer is correct.
+- Each question's difficulty must be easy, medium, or hard.
+- Return ONLY the JSON object, with no additional text.`;
 
     const text = await this.call(prompt);
-    const parsed = this.parseJson(text) as { questions?: any[] };
 
-    const questions: ProviderQuestion[] = (parsed.questions ?? [])
-      .filter((q: any) => Array.isArray(q?.options) && q.options.length >= 2)
-      .map((q: any) => ({
-        question: String(q.question ?? ''),
-        options: q.options.map((o: unknown) => String(o)),
-        correctAnswer: Number(q.correctAnswer ?? 0),
-        explanation: String(q.explanation ?? ''),
-        concept: String(q.concept ?? ''),
-        difficulty: isDifficulty(q.difficulty) ? q.difficulty : request.difficulty,
-      }));
+    const parsed = this.parseJson(text) as {
+      questions?: unknown;
+    };
+
+    const rawQuestions = Array.isArray(parsed.questions)
+      ? parsed.questions
+      : [];
+
+    const questions: ProviderQuestion[] = rawQuestions
+      .filter((value: unknown): value is Record<string, unknown> => {
+        if (
+          typeof value !== 'object' ||
+          value === null ||
+          Array.isArray(value)
+        ) {
+          return false;
+        }
+
+        const q = value as Record<string, unknown>;
+
+        if (
+          typeof q.question !== 'string' ||
+          !q.question.trim() ||
+          !Array.isArray(q.options) ||
+          q.options.length !== 4 ||
+          !q.options.every(
+            (option: unknown) =>
+              typeof option === 'string' && option.trim().length > 0
+          ) ||
+          new Set(
+            q.options.map((option: string) =>
+              option.trim().toLowerCase()
+            )
+          ).size !== 4 ||
+          !Number.isInteger(q.correctAnswer) ||
+          (q.correctAnswer as number) < 0 ||
+          (q.correctAnswer as number) > 3 ||
+          typeof q.explanation !== 'string' ||
+          !q.explanation.trim() ||
+          typeof q.concept !== 'string' ||
+          !q.concept.trim()
+        ) {
+          return false;
+        }
+
+        return true;
+      })
+      .slice(0, request.question_count)
+      .map((value): ProviderQuestion => {
+        const q = value as {
+          question: string;
+          options: string[];
+          correctAnswer: number;
+          explanation: string;
+          concept: string;
+          difficulty?: unknown;
+        };
+
+        return {
+          question: q.question.trim(),
+          options: q.options.map((option) => option.trim()),
+          correctAnswer: q.correctAnswer,
+          explanation: q.explanation.trim(),
+          concept: q.concept.trim(),
+          difficulty: isDifficulty(q.difficulty)
+            ? q.difficulty
+            : request.difficulty,
+        };
+      });
 
     return { questions };
   }
 
-  async validateQuestion(request: QuestionValidationRequest): Promise<QuestionValidationResult> {
+  async validateQuestion(
+    request: QuestionValidationRequest
+  ): Promise<QuestionValidationResult> {
     const prompt = `Validate the following quiz question for quality, correctness, and appropriateness.
 
 Question: ${request.question}
@@ -124,9 +225,14 @@ Explanation: ${request.explanation ?? ''}
 Concept: ${request.concept ?? ''}
 Difficulty: ${request.difficulty ?? 'medium'}
 
-Evaluate the question on clarity, correctness of the answer, quality of the distractors, educational value of the explanation and appropriate difficulty.
+Evaluate:
+- Clarity and unambiguity.
+- Whether the indicated answer is correct.
+- Whether the distractors are plausible.
+- Educational value of the explanation.
+- Whether the difficulty is appropriate.
 
-Return the response as a JSON object with this exact structure:
+Return a JSON object with this structure:
 {
   "is_valid": true,
   "score": 0.9,
@@ -134,22 +240,35 @@ Return the response as a JSON object with this exact structure:
   "issues": ["issue1", "issue2"]
 }
 
-Return ONLY the JSON object, no additional text.`;
+Return ONLY the JSON object, with no additional text.`;
 
     const text = await this.call(prompt);
+
     const parsed = this.parseJson(text) as {
-      is_valid?: boolean;
-      score?: number;
-      feedback?: string;
-      issues?: string[];
+      is_valid?: unknown;
+      score?: unknown;
+      feedback?: unknown;
+      issues?: unknown;
     };
 
     return {
-      valid: Boolean(parsed.is_valid),
-      score: typeof parsed.score === 'number' ? parsed.score : 0,
-      feedback: parsed.feedback ?? '',
-      issues: Array.isArray(parsed.issues) ? parsed.issues : [],
-      suggestions: parsed.feedback ? [parsed.feedback] : [],
+      valid: parsed.is_valid === true,
+      score:
+        typeof parsed.score === 'number' &&
+        Number.isFinite(parsed.score)
+          ? Math.max(0, Math.min(1, parsed.score))
+          : 0,
+      feedback:
+        typeof parsed.feedback === 'string' ? parsed.feedback : '',
+      issues: Array.isArray(parsed.issues)
+        ? parsed.issues.filter(
+            (issue): issue is string => typeof issue === 'string'
+          )
+        : [],
+      suggestions:
+        typeof parsed.feedback === 'string' && parsed.feedback.trim()
+          ? [parsed.feedback]
+          : [],
     };
   }
 
@@ -164,9 +283,9 @@ Weak Concepts: ${JSON.stringify(request.weak_concepts ?? [])}
 Topic Mastery: ${JSON.stringify(request.topic_mastery ?? {})}
 Recent Performance: ${JSON.stringify(request.recent_performance ?? [])}
 
-Provide a recommendation for the most appropriate topic to study next, the optimal difficulty level, specific concepts to focus on, and a clear reason.
+Recommend the most appropriate topic, difficulty level, concepts to focus on, and explain why.
 
-Return the response as a JSON object with this exact structure:
+Return a JSON object with this exact structure:
 {
   "recommended_topic": "topic name",
   "recommended_difficulty": "easy|medium|hard",
@@ -174,40 +293,90 @@ Return the response as a JSON object with this exact structure:
   "reason": "explanation for the recommendation"
 }
 
-Return ONLY the JSON object, no additional text.`;
+Return ONLY the JSON object, with no additional text.`;
 
     const text = await this.call(prompt);
+
     const parsed = this.parseJson(text) as {
-      recommended_topic?: string;
-      recommended_difficulty?: string;
-      focus_concepts?: string[];
-      reason?: string;
+      recommended_topic?: unknown;
+      recommended_difficulty?: unknown;
+      focus_concepts?: unknown;
+      reason?: unknown;
     };
 
-    const difficulty = String(parsed.recommended_difficulty ?? '').toLowerCase();
+    const difficulty = String(
+      parsed.recommended_difficulty ?? ''
+    ).toLowerCase();
 
     return {
-      recommended_topic: parsed.recommended_topic ?? 'general_knowledge',
-      recommended_difficulty: isDifficulty(difficulty) ? difficulty : 'medium',
-      focus_concepts: Array.isArray(parsed.focus_concepts) ? parsed.focus_concepts : [],
-      reason: parsed.reason ?? '',
+      recommended_topic:
+        typeof parsed.recommended_topic === 'string' &&
+        parsed.recommended_topic.trim()
+          ? parsed.recommended_topic.trim()
+          : 'general_knowledge',
+      recommended_difficulty: isDifficulty(difficulty)
+        ? difficulty
+        : 'medium',
+      focus_concepts: Array.isArray(parsed.focus_concepts)
+        ? parsed.focus_concepts.filter(
+            (concept): concept is string =>
+              typeof concept === 'string'
+          )
+        : [],
+      reason:
+        typeof parsed.reason === 'string' ? parsed.reason : '',
     };
   }
 
-  /** Parse JSON, tolerating ```json fenced blocks or surrounding prose. */
+  /**
+   * Parse JSON, tolerating fenced code blocks and surrounding prose.
+   */
   private parseJson(text: string): Record<string, any> {
     let cleaned = text.trim();
+
     if (cleaned.startsWith('```')) {
       const lines = cleaned.split('\n');
       cleaned = lines.slice(1).join('\n').trim();
-      if (cleaned.endsWith('```')) cleaned = cleaned.slice(0, -3).trim();
+
+      if (cleaned.endsWith('```')) {
+        cleaned = cleaned.slice(0, -3).trim();
+      }
     }
 
     try {
-      return JSON.parse(cleaned);
-    } catch {
-      const match = cleaned.match(/\{[\s\S]*\}/);
-      if (match) return JSON.parse(match[0]);
+      const parsed: unknown = JSON.parse(cleaned);
+
+      if (
+        typeof parsed !== 'object' ||
+        parsed === null ||
+        Array.isArray(parsed)
+      ) {
+        throw new Error('Gemini response must be a JSON object');
+      }
+
+      return parsed as Record<string, any>;
+    } catch (error) {
+      // Only attempt to recover a JSON object when direct parsing fails.
+      if (
+        error instanceof SyntaxError ||
+        (error instanceof Error &&
+          error.message === 'Gemini response must be a JSON object')
+      ) {
+        const match = cleaned.match(/\{[\s\S]*\}/);
+
+        if (match) {
+          const parsed: unknown = JSON.parse(match[0]);
+
+          if (
+            typeof parsed === 'object' &&
+            parsed !== null &&
+            !Array.isArray(parsed)
+          ) {
+            return parsed as Record<string, any>;
+          }
+        }
+      }
+
       throw new Error('Could not parse JSON from Gemini response');
     }
   }
