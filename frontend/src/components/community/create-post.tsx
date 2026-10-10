@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
+import { Textarea } from "@/components/ui/textarea";
 import { MilestoneCard } from "./milestone-card";
 import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
@@ -46,12 +47,12 @@ export function CreatePost({
     <div className="flex items-start gap-3">
       {user && <Avatar src={user.avatarUrl ?? undefined} alt={user.username} size="md" />}
       <div className="flex-1 min-w-0">
-        <textarea
+        <Textarea
           value={content}
           onChange={(e) => setContent(e.target.value.slice(0, MAX_LENGTH))}
           placeholder="Share your achievement or thought..."
           autoFocus={autoFocus}
-          className="w-full px-4 py-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none transition-all"
+          className="min-h-24"
           rows={3}
           maxLength={MAX_LENGTH}
         />
@@ -61,8 +62,8 @@ export function CreatePost({
             className={cn(
               "text-xs",
               content.length >= MAX_LENGTH
-                ? "text-red-500"
-                : "text-gray-400 dark:text-gray-500"
+                ? "text-foreground"
+                : "text-muted dark:text-surface-muted0"
             )}
           >
             {content.length}/{MAX_LENGTH}
@@ -77,14 +78,16 @@ export function CreatePost({
               variant="feed"
             />
             {onRemoveMilestone && (
-              <button
+              <Button
                 type="button"
+                variant="danger"
+                size="sm"
                 onClick={onRemoveMilestone}
                 aria-label="Remove achievement card"
-                className="absolute -right-2 -top-2 h-7 w-7 rounded-full bg-gray-900 text-white text-sm leading-none flex items-center justify-center shadow-md hover:bg-gray-700 transition-colors"
+                className="absolute -right-2 -top-2 h-7 w-7 rounded-base p-0 text-sm leading-none"
               >
                 ✕
-              </button>
+              </Button>
             )}
           </div>
         )}

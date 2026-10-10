@@ -30,15 +30,15 @@ export default function DashboardPage() {
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       {/* Hero */}
-      <div className="bg-gradient-to-r from-primary-600 to-primary-700 rounded-2xl p-6 sm:p-8 text-white">
+      <div className="bg-gradient-to-r from-primary-600 to-primary-700 rounded-2xl p-6 sm:p-8 text-secondary-background">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold mb-2">Your 2-Minute BrainSnack</h1>
-            <p className="text-primary-100">Ready to learn something new today, {firstName}?</p>
+            <h1 className="text-2xl sm:text-3xl font-bold mb-2 text-black">Your 2-Minute BrainSnack</h1>
+            <p className="text-black">Ready to learn something new today, {firstName}?</p>
           </div>
           <Link
             href="/topics"
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-primary-700 font-medium rounded-lg hover:bg-primary-50 transition-colors"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-secondary-background text-primary-700 font-medium rounded-lg hover:bg-primary-50 transition-colors"
           >
             Start Learning
             <svg
@@ -59,13 +59,13 @@ export default function DashboardPage() {
         </div>
 
         {isGuest && (
-          <div className="mt-5 flex flex-col sm:flex-row sm:items-center gap-3 rounded-xl bg-white/10 p-4">
+          <div className="mt-5 flex flex-col sm:flex-row sm:items-center gap-3 rounded-xl bg-secondary-background/10 p-4">
             <p className="text-sm text-primary-50 flex-1">
               You&apos;re browsing as a guest. Everything works — create a free account to keep
               your progress permanently.
             </p>
             <Link href="/register" className="shrink-0">
-              <Button size="sm" className="bg-white text-primary-700 hover:bg-primary-50">
+              <Button size="sm" className="bg-secondary-background text-primary-700 hover:bg-primary-50">
                 Create account
               </Button>
             </Link>
@@ -81,7 +81,7 @@ export default function DashboardPage() {
             {Array.from({ length: 4 }).map((_, i) => (
               <div
                 key={i}
-                className="h-24 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 animate-pulse"
+                className="h-24 bg-secondary-background dark:bg-foreground rounded-xl border border-surface-muted dark:border-foreground animate-pulse"
               />
             ))}
           </div>
@@ -116,20 +116,20 @@ export default function DashboardPage() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {progress.recentActivity.length === 0 ? (
-                    <p className="text-sm text-gray-500 dark:text-gray-400 py-2">
+                    <p className="text-sm text-surface-muted0 dark:text-muted py-2">
                       No activity yet. Finish a quiz to see it here.
                     </p>
                   ) : (
                     progress.recentActivity.slice(0, 6).map((activity) => (
                       <div
                         key={activity.id}
-                        className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700 last:border-0"
+                        className="flex items-center justify-between py-2 border-b border-surface-muted dark:border-foreground last:border-0"
                       >
                         <div className="min-w-0 pr-2">
-                          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                          <p className="text-sm font-medium text-foreground dark:text-secondary-background truncate">
                             {activity.reason}
                           </p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                          <p className="text-xs text-surface-muted0 dark:text-muted">
                             {formatRelativeTime(activity.createdAt)}
                           </p>
                         </div>
@@ -151,25 +151,25 @@ export default function DashboardPage() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {progress.recentQuizzes.length === 0 ? (
-                    <p className="text-sm text-gray-500 dark:text-gray-400 py-2">
+                    <p className="text-sm text-surface-muted0 dark:text-muted py-2">
                       No quizzes taken yet.
                     </p>
                   ) : (
                     progress.recentQuizzes.slice(0, 5).map((quiz) => (
                       <div
                         key={quiz.id}
-                        className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700 last:border-0"
+                        className="flex items-center justify-between py-2 border-b border-surface-muted dark:border-foreground last:border-0"
                       >
                         <div className="min-w-0 pr-2">
-                          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                          <p className="text-sm font-medium text-foreground dark:text-secondary-background truncate">
                             {quiz.topicName ?? "Mixed quiz"}
                           </p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                          <p className="text-xs text-surface-muted0 dark:text-muted">
                             {quiz.status === "completed" ? "Completed" : quiz.status} ·{" "}
                             {formatXP(quiz.xpEarned)} XP
                           </p>
                         </div>
-                        <span className="text-sm font-bold text-gray-900 dark:text-white shrink-0">
+                        <span className="text-sm font-bold text-foreground dark:text-secondary-background shrink-0">
                           {quiz.score}%
                         </span>
                       </div>

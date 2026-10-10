@@ -33,17 +33,17 @@ export function QuestionCard({
           ) : (
             <span />
           )}
-          <span className="text-sm text-gray-500 dark:text-gray-400">
+          <span className="text-sm text-surface-muted0 dark:text-muted">
             {questionNumber} of {totalQuestions}
           </span>
         </div>
 
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white leading-relaxed">
+        <h2 className="text-xl font-semibold text-foreground dark:text-secondary-background leading-relaxed">
           {question.text}
         </h2>
 
         {reveal && correctOptionId !== undefined && (
-          <p className="mt-3 text-xs text-gray-400 dark:text-gray-500">
+          <p className="mt-3 text-xs text-muted dark:text-surface-muted0">
             {selectedOptionId === correctOptionId
               ? "You picked the right answer."
               : `The right answer was option ${String.fromCharCode(65 + Number(correctOptionId))}.`}
@@ -51,7 +51,7 @@ export function QuestionCard({
         )}
 
         {!reveal && (
-          <p className="mt-3 text-xs text-gray-400 dark:text-gray-500">
+          <p className="mt-3 text-xs text-muted dark:text-surface-muted0">
             Difficulty: {DIFFICULTY_LABELS[question.difficulty] ?? question.difficulty}
           </p>
         )}

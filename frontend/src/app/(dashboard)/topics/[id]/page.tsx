@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { ErrorState, LoadingState } from "@/components/ui/state";
 import { StartQuizButton } from "@/components/quiz/start-quiz-button";
+import { Button } from "@/components/ui/button";
 import { DIFFICULTY_LABELS } from "@/lib/constants";
 import type { Difficulty } from "@/types";
 
@@ -52,7 +53,7 @@ export default function TopicDetailPage() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
-      <Link href="/topics" className="text-sm text-gray-500 dark:text-gray-400 hover:underline">
+      <Link href="/topics" className="text-sm text-surface-muted0 dark:text-muted hover:underline">
         ← All topics
       </Link>
 
@@ -66,9 +67,9 @@ export default function TopicDetailPage() {
               <span aria-hidden>{topic.icon}</span>
             </div>
             <div className="min-w-0">
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{topic.name}</h1>
+              <h1 className="text-2xl font-bold text-foreground dark:text-secondary-background">{topic.name}</h1>
               {topic.description && (
-                <p className="text-gray-600 dark:text-gray-400 mt-1">{topic.description}</p>
+                <p className="text-muted dark:text-muted mt-1">{topic.description}</p>
               )}
               <div className="flex flex-wrap gap-2 mt-3">
                 <Badge variant="default" size="sm">
@@ -95,30 +96,30 @@ export default function TopicDetailPage() {
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-500 dark:text-gray-400">Mastery</span>
-              <span className="font-medium text-gray-900 dark:text-white">
+              <span className="text-surface-muted0 dark:text-muted">Mastery</span>
+              <span className="font-medium text-foreground dark:text-secondary-background">
                 {topicProgress.mastery}%
               </span>
             </div>
             <Progress value={topicProgress.mastery} />
             <div className="grid grid-cols-3 gap-4 text-center pt-1">
               <div>
-                <p className="text-lg font-bold text-gray-900 dark:text-white">
+                <p className="text-lg font-bold text-foreground dark:text-secondary-background">
                   {topicProgress.questionsAttempted}
                 </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Attempted</p>
+                <p className="text-xs text-surface-muted0 dark:text-muted">Attempted</p>
               </div>
               <div>
-                <p className="text-lg font-bold text-gray-900 dark:text-white">
+                <p className="text-lg font-bold text-foreground dark:text-secondary-background">
                   {topicProgress.questionsCorrect}
                 </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Correct</p>
+                <p className="text-xs text-surface-muted0 dark:text-muted">Correct</p>
               </div>
               <div>
-                <p className="text-lg font-bold text-gray-900 dark:text-white">
+                <p className="text-lg font-bold text-foreground dark:text-secondary-background">
                   {topicProgress.accuracy}%
                 </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Accuracy</p>
+                <p className="text-xs text-surface-muted0 dark:text-muted">Accuracy</p>
               </div>
             </div>
           </CardContent>
@@ -131,67 +132,55 @@ export default function TopicDetailPage() {
         </CardHeader>
         <CardContent className="space-y-5">
           <div>
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <p className="text-sm font-medium text-foreground dark:text-muted mb-2">
               Difficulty
             </p>
             <div className="flex flex-wrap gap-2">
-              <button
+              <Button
                 type="button"
+                variant={difficulty === undefined ? "primary" : "outline"}
+                size="sm"
                 onClick={() => setDifficulty(undefined)}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
-                  difficulty === undefined
-                    ? "border-primary-500 bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300"
-                    : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-300"
-                }`}
               >
                 Adaptive
-              </button>
+              </Button>
               {DIFFICULTIES.map((level) => (
-                <button
+                <Button
                   key={level}
                   type="button"
+                  variant={difficulty === level ? "primary" : "outline"}
+                  size="sm"
                   onClick={() => setDifficulty(level)}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
-                    difficulty === level
-                      ? "border-primary-500 bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300"
-                      : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-300"
-                  }`}
                 >
                   {DIFFICULTY_LABELS[level]}
-                </button>
+                </Button>
               ))}
             </div>
           </div>
 
           <div>
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <p className="text-sm font-medium text-foreground dark:text-muted mb-2">
               Questions
             </p>
             <div className="flex flex-wrap gap-2">
-              <button
+              <Button
                 type="button"
+                variant={questionCount === undefined ? "primary" : "outline"}
+                size="sm"
                 onClick={() => setQuestionCount(undefined)}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
-                  questionCount === undefined
-                    ? "border-primary-500 bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300"
-                    : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-300"
-                }`}
               >
                 Default
-              </button>
+              </Button>
               {COUNTS.map((count) => (
-                <button
+                <Button
                   key={count}
                   type="button"
+                  variant={questionCount === count ? "primary" : "outline"}
+                  size="sm"
                   onClick={() => setQuestionCount(count)}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
-                    questionCount === count
-                      ? "border-primary-500 bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300"
-                      : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-300"
-                  }`}
                 >
                   {count}
-                </button>
+                </Button>
               ))}
             </div>
           </div>
@@ -205,7 +194,7 @@ export default function TopicDetailPage() {
           />
 
           {topic.questionCount === 0 && (
-            <p className="text-sm text-amber-600 dark:text-amber-400">
+            <p className="text-sm text-foreground dark:text-foreground">
               This topic has no questions in the bank yet, so a quiz cannot be generated.
             </p>
           )}

@@ -53,22 +53,22 @@ export default function LoginPage() {
   const busy = isLoading || isStartingGuest;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-white to-primary-100 dark:from-gray-900 dark:via-gray-900 dark:to-primary-900/20 px-4 py-10">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-secondary-background to-primary-100 dark:from-foreground dark:via-foreground dark:to-primary-900/20 px-4 py-10">
       <div className="w-full max-w-md space-y-4">
         <Card>
           <CardHeader className="text-center">
             <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center mx-auto mb-4">
-              <span className="text-white font-bold text-lg">BS</span>
+              <span className="text-secondary-background font-bold text-lg">BS</span>
             </div>
             <CardTitle className="text-2xl">Welcome back</CardTitle>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-sm text-surface-muted0 dark:text-muted">
               Sign in to continue your learning streak
             </p>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               {error && (
-                <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-600 dark:text-red-400">
+                <div className="p-3 bg-error dark:bg-error/20 border border-border dark:border-border rounded-lg text-sm text-foreground dark:text-foreground">
                   {error}
                 </div>
               )}
@@ -100,7 +100,7 @@ export default function LoginPage() {
               </Button>
             </form>
 
-            <p className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
+            <p className="mt-6 text-center text-sm text-surface-muted0 dark:text-muted">
               Don&apos;t have an account?{" "}
               <Link
                 href="/register"
@@ -116,8 +116,8 @@ export default function LoginPage() {
         <Card>
           <CardContent className="pt-5 text-center space-y-3">
             <div>
-              <p className="font-medium text-gray-900 dark:text-white">Just looking around?</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              <p className="font-medium text-foreground dark:text-secondary-background">Just looking around?</p>
+              <p className="text-sm text-surface-muted0 dark:text-muted mt-1">
                 Use every feature as a guest. No sign-up, no password. Your progress is saved
                 for this browser session.
               </p>

@@ -13,9 +13,9 @@ interface QuickStatsProps {
 export function QuickStats({ totalXP, level, streak, personalBest }: QuickStatsProps) {
   const stats = [
     { label: "Total XP", value: totalXP.toLocaleString(), icon: "⚡", color: "text-primary-600 dark:text-primary-400" },
-    { label: "Level", value: level.toString(), icon: "🎯", color: "text-green-600 dark:text-green-400" },
+    { label: "Level", value: level.toString(), icon: "🎯", color: "text-foreground dark:text-foreground" },
     { label: "Streak", value: `${streak} days`, icon: "🔥", color: "text-accent-600 dark:text-accent-400" },
-    { label: "Best Score", value: `${personalBest}%`, icon: "🏆", color: "text-purple-600 dark:text-purple-400" },
+    { label: "Best Score", value: `${personalBest}%`, icon: "🏆", color: "text-primary-500 dark:text-primary-500" },
   ];
 
   return (
@@ -25,7 +25,7 @@ export function QuickStats({ totalXP, level, streak, personalBest }: QuickStatsP
           <CardContent className="pt-4 pb-3">
             <div className="flex items-center gap-2 mb-1">
               <span className="text-lg">{stat.icon}</span>
-              <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+              <span className="text-xs font-medium text-surface-muted0 dark:text-muted uppercase tracking-wide">
                 {stat.label}
               </span>
             </div>

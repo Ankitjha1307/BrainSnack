@@ -137,8 +137,8 @@ function QuizPlayer() {
     return (
       <div className="space-y-4">
         {challengeId && (
-          <Card className="border-primary-200 dark:border-primary-800">
-            <CardContent className="pt-4 text-sm text-gray-600 dark:text-gray-300">
+          <Card className="border-border-200 dark:border-border-800">
+            <CardContent className="pt-4 text-sm text-muted dark:text-muted">
               This round counts towards a challenge. Your score is submitted automatically when
               you finish.
             </CardContent>
@@ -184,15 +184,15 @@ function QuizPlayer() {
         {challengeNote && (
           <Card>
             <CardContent className="pt-5 text-center">
-              <p className="text-sm font-medium text-gray-900 dark:text-white">Challenge</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{challengeNote}</p>
+              <p className="text-sm font-medium text-foreground dark:text-secondary-background">Challenge</p>
+              <p className="text-sm text-surface-muted0 dark:text-muted mt-1">{challengeNote}</p>
             </CardContent>
           </Card>
         )}
         {challengeWin && (
           <Card className="border-accent-200 dark:border-accent-800">
             <CardContent className="pt-5 flex items-center justify-between gap-3">
-              <p className="text-sm font-medium text-gray-900 dark:text-white">
+              <p className="text-sm font-medium text-foreground dark:text-secondary-background">
                 You won the challenge! Share the bragging rights.
               </p>
               <Button

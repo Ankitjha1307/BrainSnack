@@ -2,6 +2,7 @@
 
 import React from "react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 export interface FeedTab {
   id: string;
@@ -17,24 +18,24 @@ interface FeedTabsProps {
 /** X-style underlined tab bar for the feed scopes. */
 export function FeedTabs({ tabs, active, onChange }: FeedTabsProps) {
   return (
-    <div className="flex border-b border-gray-200 dark:border-gray-800">
+    <div className="flex border-b border-surface-muted dark:border-foreground">
       {tabs.map((tab) => (
-        <button
+        <Button
           key={tab.id}
           type="button"
+          variant="ghost"
+          size="sm"
           onClick={() => onChange(tab.id)}
           className={cn(
-            "relative flex-1 py-3 text-sm font-medium transition-colors",
-            active === tab.id
-              ? "text-gray-900 dark:text-white"
-              : "text-gray-500 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800/50"
+            "relative h-auto flex-1 rounded-none border-x-0 border-t-0 py-3 text-sm font-medium shadow-none",
+            active === tab.id ? "border-b-2 border-main text-foreground" : "text-muted"
           )}
         >
           {tab.label}
           {active === tab.id && (
-            <span className="absolute inset-x-0 -bottom-px mx-auto h-0.5 w-16 rounded-full bg-primary-600" />
+            <span className="absolute inset-x-0 bottom-0 mx-auto h-1 w-16 bg-main" />
           )}
-        </button>
+        </Button>
       ))}
     </div>
   );

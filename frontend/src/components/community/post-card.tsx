@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { Post } from "@/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import { MilestoneCard } from "./milestone-card";
 import { formatRelativeTime } from "@/lib/utils";
 import { milestoneFromPost } from "@/lib/milestones";
@@ -54,11 +55,11 @@ export function PostCard({ post, onLike, onUnlike }: PostCardProps) {
             <div className="flex items-center gap-2">
               <Link
                 href={`/u/${post.author.id}`}
-                className="font-semibold text-gray-900 hover:underline dark:text-white"
+                className="font-semibold text-foreground hover:underline dark:text-secondary-background"
               >
                 {post.author.displayName || post.author.username}
               </Link>
-              <span className="text-sm text-gray-400 dark:text-gray-500">
+              <span className="text-sm text-muted dark:text-surface-muted0">
                 {formatRelativeTime(post.createdAt)}
               </span>
             </div>
@@ -67,7 +68,7 @@ export function PostCard({ post, onLike, onUnlike }: PostCardProps) {
               <div className="mt-3 space-y-2">
                 <MilestoneCard milestone={milestone} user={post.author} variant="feed" />
                 {post.caption && (
-                  <p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                  <p className="text-sm leading-relaxed text-foreground dark:text-muted secondary-backgroundspace-pre-wrap">
                     {post.caption}
                   </p>
                 )}
@@ -81,7 +82,7 @@ export function PostCard({ post, onLike, onUnlike }: PostCardProps) {
                   </div>
                 )}
                 {body && (
-                  <p className="mt-2 text-gray-700 dark:text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">
+                  <p className="mt-2 text-foreground dark:text-muted text-sm leading-relaxed secondary-backgroundspace-pre-wrap">
                     {body}
                   </p>
                 )}
@@ -89,13 +90,15 @@ export function PostCard({ post, onLike, onUnlike }: PostCardProps) {
             )}
 
             <div className="flex items-center gap-4 mt-3">
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="sm"
                 onClick={handleLike}
                 aria-pressed={isLiked}
                 aria-label={isLiked ? "Unlike post" : "Like post"}
-                className={`flex items-center gap-1 text-sm transition-colors ${
-                  isLiked ? "text-red-500" : "text-gray-400 hover:text-red-500"
+                className={`h-8 border-transparent px-2 ${
+                  isLiked ? "text-foreground" : "text-muted hover:border-border hover:text-foreground"
                 }`}
               >
                 <svg
@@ -112,7 +115,7 @@ export function PostCard({ post, onLike, onUnlike }: PostCardProps) {
                   />
                 </svg>
                 {likes}
-              </button>
+              </Button>
             </div>
           </div>
         </div>

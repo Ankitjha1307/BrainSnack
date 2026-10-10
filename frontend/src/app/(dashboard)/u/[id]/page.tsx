@@ -26,19 +26,19 @@ interface UserStats {
 /** Compact link rows for the follower/following panels. */
 function MiniUserList({ users }: { users: UserSearchResult[] }) {
   if (users.length === 0) {
-    return <p className="text-sm text-gray-500 dark:text-gray-400">Nothing here yet.</p>;
+    return <p className="text-sm text-surface-muted0 dark:text-muted">Nothing here yet.</p>;
   }
   return (
     <ul className="space-y-2">
       {users.map((user) => (
         <li key={user.id}>
-          <Link href={`/u/${user.id}`} className="flex min-w-0 items-center gap-3 rounded-lg p-1.5 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+          <Link href={`/u/${user.id}`} className="flex min-w-0 items-center gap-3 rounded-lg p-1.5 hover:bg-surface-muted dark:hover:bg-foreground/50 transition-colors">
             <Avatar src={user.avatarUrl ?? undefined} alt={user.username} size="sm" />
             <div className="min-w-0">
-              <p className="truncate text-sm font-medium text-gray-900 dark:text-white">
+              <p className="truncate text-sm font-medium text-foreground dark:text-secondary-background">
                 {user.displayName || user.username}
               </p>
-              <p className="truncate text-xs text-gray-500 dark:text-gray-400">
+              <p className="truncate text-xs text-surface-muted0 dark:text-muted">
                 @{user.username} · Lv {user.level}
               </p>
             </div>
@@ -132,20 +132,20 @@ export default function PublicProfilePage() {
       <div className="grid grid-cols-2 gap-3">
         <Card>
           <CardContent className="pt-4 pb-3 text-center">
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">
+            <p className="text-2xl font-bold text-foreground dark:text-secondary-background">
               {stats?.followers ?? 0}
             </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+            <p className="text-xs text-surface-muted0 dark:text-muted uppercase tracking-wide">
               Followers
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-4 pb-3 text-center">
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">
+            <p className="text-2xl font-bold text-foreground dark:text-secondary-background">
               {stats?.following ?? 0}
             </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+            <p className="text-xs text-surface-muted0 dark:text-muted uppercase tracking-wide">
               Following
             </p>
           </CardContent>
@@ -155,7 +155,7 @@ export default function PublicProfilePage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardContent className="pt-5">
-            <h2 className="mb-3 text-base font-semibold text-gray-900 dark:text-white">
+            <h2 className="mb-3 text-base font-semibold text-foreground dark:text-secondary-background">
               Followers
             </h2>
             <MiniUserList users={followers ?? []} />
@@ -163,7 +163,7 @@ export default function PublicProfilePage() {
         </Card>
         <Card>
           <CardContent className="pt-5">
-            <h2 className="mb-3 text-base font-semibold text-gray-900 dark:text-white">
+            <h2 className="mb-3 text-base font-semibold text-foreground dark:text-secondary-background">
               Following
             </h2>
             <MiniUserList users={following ?? []} />

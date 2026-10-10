@@ -17,19 +17,19 @@ interface ChallengeCardProps {
 const STATUS_STYLES: Record<Challenge["status"], { label: string; className: string }> = {
   pending: {
     label: "Pending",
-    className: "bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300",
+    className: "bg-warning/15 text-foreground",
   },
   accepted: {
     label: "In progress",
-    className: "bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300",
+    className: "bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-200",
   },
   completed: {
     label: "Completed",
-    className: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
+    className: "bg-success/15 text-foreground",
   },
   declined: {
     label: "Declined",
-    className: "bg-slate-100 text-slate-600 dark:bg-slate-500/15 dark:text-slate-400",
+    className: "bg-surface-muted text-muted",
   },
 };
 
@@ -67,10 +67,10 @@ export function ChallengeCard({
               size="md"
             />
             <div className="min-w-0">
-              <p className="font-medium text-gray-900 dark:text-white truncate">
+              <p className="font-medium text-foreground dark:text-secondary-background truncate">
                 {challenge.challenger.displayName || challenge.challenger.username}
               </p>
-              <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{challenge.topicName}</p>
+              <p className="text-sm text-surface-muted0 dark:text-muted truncate">{challenge.topicName}</p>
             </div>
           </div>
           <span
@@ -80,7 +80,7 @@ export function ChallengeCard({
           </span>
         </div>
 
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-600 dark:text-gray-400 mb-4">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted dark:text-muted mb-4">
           <span>Target: {challenge.targetScore} correct</span>
           <span>Started {formatDate(challenge.createdAt)}</span>
         </div>
@@ -92,7 +92,7 @@ export function ChallengeCard({
             return (
               <div
                 key={participant.id}
-                className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-800/60 rounded-lg min-w-0"
+                className="flex items-center gap-2 p-3 bg-surface-muted dark:bg-foreground/60 rounded-lg min-w-0"
               >
                 <Avatar
                   src={participant.avatarUrl ?? undefined}
@@ -100,20 +100,20 @@ export function ChallengeCard({
                   size="sm"
                 />
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                  <p className="text-sm font-medium text-foreground dark:text-secondary-background truncate">
                     {participant.username}
                     {participant.id === challenge.challenger.id && (
-                      <span className="ml-1 text-xs text-gray-400 font-normal">challenger</span>
+                      <span className="ml-1 text-xs text-muted font-normal">challenger</span>
                     )}
                   </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                  <p className="text-xs text-surface-muted0 dark:text-muted">
                     {participant.score === null ? (
                       "No score yet"
                     ) : (
                       <>
                         {participant.score} correct
                         {reached && (
-                          <span className="ml-1 text-emerald-600 dark:text-emerald-400 font-medium">
+                          <span className="ml-1 text-foreground dark:text-foreground font-medium">
                             ✓
                           </span>
                         )}
@@ -139,21 +139,21 @@ export function ChallengeCard({
         )}
 
         {challenge.status === "accepted" && challenge.viewerHasSubmitted && (
-          <p className="text-center text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-center text-sm text-surface-muted0 dark:text-muted">
             Waiting for the other player to finish
           </p>
         )}
 
         {challenge.status === "completed" && winner && (
-          <div className="text-center p-3 bg-gray-50 dark:bg-gray-800/60 rounded-lg">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+          <div className="text-center p-3 bg-surface-muted dark:bg-foreground/60 rounded-lg">
+            <p className="text-sm text-muted dark:text-muted">
               Winner:{" "}
-              <span className="font-medium text-gray-900 dark:text-white">
+              <span className="font-medium text-foreground dark:text-secondary-background">
                 {winner.displayName || winner.username}
               </span>
             </p>
             {challenge.completedAt && (
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              <p className="text-xs text-surface-muted0 dark:text-muted mt-1">
                 Finished {formatDate(challenge.completedAt)}
               </p>
             )}

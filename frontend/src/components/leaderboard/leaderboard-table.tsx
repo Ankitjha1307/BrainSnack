@@ -12,29 +12,29 @@ interface LeaderboardTableProps {
 
 export function LeaderboardTable({ entries, currentUserId }: LeaderboardTableProps) {
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+    <div className="bg-secondary-background dark:bg-foreground rounded-xl border border-surface-muted dark:border-foreground overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
-            <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
-              <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+            <tr className="border-b border-surface-muted dark:border-foreground bg-surface-muted dark:bg-foreground/50">
+              <th className="text-left px-4 py-3 text-xs font-medium text-surface-muted0 dark:text-muted uppercase tracking-wider">
                 Rank
               </th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th className="text-left px-4 py-3 text-xs font-medium text-surface-muted0 dark:text-muted uppercase tracking-wider">
                 User
               </th>
-              <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th className="text-right px-4 py-3 text-xs font-medium text-surface-muted0 dark:text-muted uppercase tracking-wider">
                 XP
               </th>
-              <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden sm:table-cell">
+              <th className="text-right px-4 py-3 text-xs font-medium text-surface-muted0 dark:text-muted uppercase tracking-wider hidden sm:table-cell">
                 Streak
               </th>
-              <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden sm:table-cell">
+              <th className="text-right px-4 py-3 text-xs font-medium text-surface-muted0 dark:text-muted uppercase tracking-wider hidden sm:table-cell">
                 Level
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+          <tbody className="divide-y divide-surface-muted dark:divide-foreground">
             {entries.map((entry) => (
               <tr
                 key={entry.user.id}
@@ -42,7 +42,7 @@ export function LeaderboardTable({ entries, currentUserId }: LeaderboardTablePro
                   "transition-colors",
                   entry.user.id === currentUserId
                     ? "bg-primary-50 dark:bg-primary-900/20"
-                    : "hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                    : "hover:bg-surface-muted dark:hover:bg-foreground/50"
                 )}
               >
                 <td className="px-4 py-3">
@@ -50,10 +50,10 @@ export function LeaderboardTable({ entries, currentUserId }: LeaderboardTablePro
                     <span
                       className={cn(
                         "flex items-center justify-center h-7 w-7 rounded-full text-sm font-bold",
-                        entry.rank === 1 && "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300",
-                        entry.rank === 2 && "bg-gray-100 text-gray-700 dark:bg-gray-600 dark:text-gray-300",
-                        entry.rank === 3 && "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300",
-                        entry.rank > 3 && "text-gray-500 dark:text-gray-400"
+                        entry.rank === 1 && "bg-warning text-foreground dark:bg-warning/30 dark:text-foreground",
+                        entry.rank === 2 && "bg-surface-muted text-foreground dark:bg-muted dark:text-muted",
+                        entry.rank === 3 && "bg-primary-500 text-primary-500 dark:bg-primary-500/30 dark:text-primary-500",
+                        entry.rank > 3 && "text-surface-muted0 dark:text-muted"
                       )}
                     >
                       {entry.rank}
@@ -69,31 +69,31 @@ export function LeaderboardTable({ entries, currentUserId }: LeaderboardTablePro
                   <div className="flex items-center gap-3">
                     <Avatar src={entry.user.avatarUrl ?? undefined} alt={entry.user.username} size="sm" />
                     <div>
-                      <p className="font-medium text-gray-900 dark:text-white text-sm">
+                      <p className="font-medium text-foreground dark:text-secondary-background text-sm">
                         {entry.user.username}
                         {entry.user.id === currentUserId && (
                           <span className="ml-2 text-xs text-primary-600 dark:text-primary-400">(You)</span>
                         )}
                       </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                      <p className="text-xs text-surface-muted0 dark:text-muted">
                         Level {entry.user.level}
                       </p>
                     </div>
                   </div>
                 </td>
                 <td className="px-4 py-3 text-right">
-                  <span className="font-semibold text-gray-900 dark:text-white">
+                  <span className="font-semibold text-foreground dark:text-secondary-background">
                     {entry.xp.toLocaleString()}
                   </span>
                 </td>
                 <td className="px-4 py-3 text-right hidden sm:table-cell">
                   <div className="flex items-center justify-end gap-1">
                     <span className="text-accent-500">🔥</span>
-                    <span className="text-sm text-gray-600 dark:text-gray-400">{entry.streak}</span>
+                    <span className="text-sm text-muted dark:text-muted">{entry.streak}</span>
                   </div>
                 </td>
                 <td className="px-4 py-3 text-right hidden sm:table-cell">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                  <span className="text-sm text-muted dark:text-muted">
                     Lvl {entry.level}
                   </span>
                 </td>

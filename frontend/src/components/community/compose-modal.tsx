@@ -6,6 +6,8 @@ import { useCompose } from "@/context/ComposeContext";
 import { CreatePost } from "./create-post";
 import { postsApi } from "@/lib/api";
 import { ErrorNotice } from "@/components/ui/state";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { postTypeForMilestone, type Milestone } from "@/lib/milestones";
 
 /**
@@ -67,33 +69,38 @@ export function ComposeModal() {
       role="dialog"
       aria-modal="true"
       aria-label="Create a new post"
-      className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-0 sm:p-4"
+      className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-foreground/50 backdrop-blur-sm p-0 sm:p-4"
       onClick={closeCompose}
     >
-      <div
-        className="w-full sm:max-w-lg max-h-[92vh] overflow-y-auto bg-white dark:bg-gray-900 rounded-t-2xl sm:rounded-2xl shadow-2xl p-4 sm:p-5 animate-slide-up"
+      <Card
+        padding="none"
+        className="w-full max-h-[92vh] max-w-lg overflow-y-auto rounded-t-base p-4 animate-slide-up sm:rounded-base sm:p-5"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">New post</h2>
-          <button
+          <h2 className="text-lg font-semibold text-foreground dark:text-secondary-background">New post</h2>
+          <Button
             type="button"
+            variant="ghost"
+            size="sm"
             onClick={closeCompose}
             aria-label="Close composer"
-            className="h-8 w-8 rounded-full text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center justify-center transition-colors"
+            className="h-8 w-8 rounded-base p-0 text-muted"
           >
             ✕
-          </button>
+          </Button>
         </div>
 
         {pendingMilestone && !attached && (
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="sm"
             onClick={() => setAttached(pendingMilestone)}
-            className="mb-3 w-full rounded-lg border border-dashed border-primary-300 dark:border-primary-700 px-3 py-2 text-sm font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
+            className="mb-3 w-full border-dashed"
           >
             ✨ Attach your achievement card
-          </button>
+          </Button>
         )}
 
         {error && (
@@ -108,7 +115,7 @@ export function ComposeModal() {
           onSubmit={handleSubmit}
           autoFocus
         />
-      </div>
+      </Card>
     </div>
   );
 }

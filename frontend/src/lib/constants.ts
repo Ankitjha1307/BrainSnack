@@ -12,20 +12,20 @@ export const DIFFICULTY_LABELS: Record<string, string> = {
 /** Tailwind classes per topic, keyed by slug. Falls back to a neutral slate. */
 const TOPIC_THEME: Record<string, string> = {
   programming:
-    "bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300",
-  "ai-ml": "bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300",
+    "bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-200",
+  "ai-ml": "bg-accent-100 text-accent-700 dark:bg-accent-900/30 dark:text-accent-200",
   science:
     "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
-  history: "bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300",
+  history: "bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-200",
   geography:
-    "bg-cyan-100 text-cyan-700 dark:bg-cyan-500/15 dark:text-cyan-300",
-  business: "bg-pink-100 text-pink-700 dark:bg-pink-500/15 dark:text-pink-300",
+    "bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-200",
+  business: "bg-surface-muted text-foreground dark:bg-surface-muted dark:text-foreground",
   "general-knowledge":
-    "bg-indigo-100 text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300",
+    "bg-surface-muted text-foreground dark:bg-surface-muted dark:text-foreground",
 };
 
 export const DEFAULT_TOPIC_THEME =
-  "bg-slate-100 text-slate-700 dark:bg-slate-500/15 dark:text-slate-300";
+  "bg-surface-muted text-muted dark:bg-surface-muted dark:text-muted";
 
 export function topicTheme(slug: string | null | undefined): string {
   if (!slug) return DEFAULT_TOPIC_THEME;
