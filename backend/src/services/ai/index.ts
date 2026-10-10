@@ -52,8 +52,9 @@ export const generateQuizWithAI = async (
   topic: { id: string; name: string; slug: string } | null,
   difficulty: Difficulty,
   questionCount: number,
-  excludeQuestionIds: string[] = []
-): Promise<{ questions: AIQuestion[]; source: 'ai' | 'bank' }> => {
+  excludeQuestionIds: string[] = [],
+  learnerContext = ''
+): Promise<{ questions: AIQuestion[]; source: 'ai' | 'bank' | 'dummy' }> => {
   const [weakTopics, mistakes, performance] = await Promise.all([
     LearnerTopicProgress.aggregate([
       { $match: { user_id: userId, questions_attempted: { $gt: 0 } } },
@@ -137,6 +138,7 @@ export const generateQuizWithAI = async (
       accuracy: Math.round(performance[0]?.accuracy ?? 0),
       avg_time: Math.round(performance[0]?.avg_time ?? 0),
     },
+    learner_context: learnerContext.trim().slice(0, 2000),
   };
 
   try {
@@ -217,7 +219,43 @@ export const generateQuizWithAI = async (
     excludeQuestionIds
   );
 
-  return { questions: bankQuestions, source: 'bank' };
+  if (bankQuestions.length > 0) {
+    return { questions: bankQuestions, source: 'bank' };
+  }
+
+  console.warn(
+    `[ai] no provider or bank questions available; using offline demo fallback for ${questionCount} questions`
+  );
+
+  const category =
+    topic?.name ??
+    learnerContext?.match(/^Category:\s*(.+)$/m)?.[1]?.trim() ??
+    'General Knowledge';
+  const fallbackQuestion: AIQuestion = {
+    question: `Which approach is the best starting point for learning ${category}?`,
+    options: [
+      'Understand the core idea, then practise it with an example.',
+      'Memorise unrelated facts without checking their meaning.',
+      'Skip the basics and only study the hardest edge cases.',
+      'Avoid practising so mistakes cannot be discovered.',
+    ],
+    correct_answer: 0,
+    explanation:
+      'Starting with the core idea and applying it to an example creates a useful foundation for deeper learning.',
+    difficulty,
+    concept: category,
+  };
+
+  return {
+    questions: Array.from({ length: questionCount }, (_, index) => ({
+      ...fallbackQuestion,
+      question:
+        index === 0
+          ? fallbackQuestion.question
+          : `What is a practical way to build confidence in ${category}?`,
+    })),
+    source: 'dummy',
+  };
 };
 
 /**

@@ -13,6 +13,7 @@ import { QuickStats } from "@/components/dashboard/quick-stats";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ErrorState, SkeletonList } from "@/components/ui/state";
 import { formatRelativeTime, formatXP } from "@/lib/utils";
+import { StartQuizButton } from "@/components/quiz/start-quiz-button";
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -35,26 +36,13 @@ export default function DashboardPage() {
             <h1 className="text-2xl sm:text-3xl font-bold mb-2 text-black">Your 2-Minute BrainSnack</h1>
             <p className="text-black">Ready to learn something new today, {firstName}?</p>
           </div>
-          <Link
-            href="/topics"
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-secondary-background text-primary-700 font-medium rounded-lg hover:bg-primary-50 transition-colors"
-          >
-            Start Learning
-            <svg
-              className="h-4 w-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              aria-hidden
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M13 7l5 5m0 0l-5 5m5-5H6"
-              />
-            </svg>
-          </Link>
+          <div className="w-full sm:w-56">
+            <StartQuizButton
+              label="Generate AI quiz"
+              size="lg"
+              className="[&_button]:bg-secondary-background [&_button]:text-foreground [&_button]:hover:bg-secondary-background"
+            />
+          </div>
         </div>
       </div>
 

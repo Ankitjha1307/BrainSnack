@@ -208,6 +208,7 @@ export interface GenerateQuizRequest {
   topic_id?: string;
   difficulty?: 'easy' | 'medium' | 'hard';
   question_count?: number;
+  learner_context?: string;
 }
 
 export interface SubmitAttemptRequest {

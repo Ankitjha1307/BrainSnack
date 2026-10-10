@@ -35,7 +35,7 @@ if (isProduction && !process.env.MONGODB_URI) {
   throw new Error('MONGODB_URI must be set when NODE_ENV=production');
 }
 
-const aiProvider = (process.env.AI_PROVIDER || 'mock').toLowerCase();
+const aiProvider = (process.env.AI_PROVIDER || 'gemini').toLowerCase();
 
 export const config = {
   // 3001 so it never collides with the Next.js dev server on 3000.
@@ -60,6 +60,12 @@ export const config = {
     provider: aiProvider === 'gemini' ? ('gemini' as const) : ('mock' as const),
     geminiApiKey: process.env.GEMINI_API_KEY || '',
     geminiModel: process.env.GEMINI_MODEL || 'gemini-1.5-flash',
+    geminiModels: (process.env.GEMINI_MODELS ||
+      process.env.GEMINI_MODEL ||
+      'gemini-2.5-flash,gemini-2.5-pro,gemini-1.5-flash')
+      .split(',')
+      .map((model) => model.trim())
+      .filter(Boolean),
     timeout: parseInt(process.env.AI_TIMEOUT_MS || '10000', 10),
   },
 

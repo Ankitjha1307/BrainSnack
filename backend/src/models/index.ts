@@ -177,6 +177,7 @@ export interface IQuiz extends Document<string> {
   // Ordered membership replaces the old `quiz_questions` join table. Everything
   // needed to render and grade a quiz lives on the quiz document.
   question_ids: string[];
+  learner_context: string | null;
   created_at: Date;
   updated_at: Date;
   completed_at: Date | null;
@@ -198,6 +199,7 @@ const quizSchema = new Schema<IQuiz>(
     xp_earned: { type: Number, default: 0 },
     score: { type: Number, default: 0 },
     question_ids: { type: [String], default: [] },
+    learner_context: { type: String, default: null, maxlength: 2000 },
     completed_at: { type: Date, default: null },
   },
   baseOptions

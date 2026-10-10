@@ -7,7 +7,8 @@ BrainSnack is a social, AI-powered micro-learning platform designed for 2–5 mi
 ## Features
 
 - **Adaptive Learning Engine** — Tracks topic/concept mastery and adjusts difficulty in real-time
-- **AI-Powered Quiz Generation** — In-process TypeScript provider (mock for offline dev, Gemini for production)
+- **AI-Powered Quiz Generation** — In-process TypeScript provider using the
+  official Google GenAI SDK (mock for offline dev, Gemini for production)
 - **Gamified Experience** — XP, streaks, levels, badges, and leaderboards
 - **Social Learning** — Achievement posts, likes, follows, and friend challenges
 - **Polished UI** — Modern, responsive, dark mode support
@@ -16,7 +17,7 @@ BrainSnack is a social, AI-powered micro-learning platform designed for 2–5 mi
 
 | Layer | Technology |
 |-------|-----------|
-| Frontend | Next.js App Router + TypeScript + Tailwind CSS |
+| Frontend | Next.js 16 App Router + TypeScript + Tailwind CSS |
 | Backend | Node.js + Express + TypeScript |
 | AI | In-process TypeScript provider (mock / Google Gemini) |
 | Database | MongoDB + Mongoose ODM |
@@ -97,6 +98,9 @@ MONGODB_URI=mongodb://127.0.0.1:27017/brainsnack
 AI_PROVIDER=mock
 GEMINI_API_KEY=
 GEMINI_MODEL=gemini-1.5-flash
+# Optional ordered model fallback chain. The first model that returns a valid
+# response wins; local bank data is used only after every model fails.
+GEMINI_MODELS=gemini-2.5-flash,gemini-2.5-pro,gemini-1.5-flash
 ```
 
 The application works without any API keys using the mock provider. To switch to

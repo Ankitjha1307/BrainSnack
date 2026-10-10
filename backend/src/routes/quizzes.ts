@@ -104,6 +104,10 @@ router.post('/generate', authMiddleware, async (req: Request, res: Response) => 
   try {
     const userId = req.userId!;
     const body = (req.body ?? {}) as GenerateQuizRequest;
+    const learnerContext =
+      typeof body.learner_context === 'string'
+        ? body.learner_context.trim().slice(0, 2000)
+        : '';
 
     // ---- validate -------------------------------------------------------
     let topicId: string | null = null;
@@ -156,7 +160,8 @@ router.post('/generate', authMiddleware, async (req: Request, res: Response) => 
       topic,
       difficulty,
       questionCount,
-      recentlySeen
+      recentlySeen,
+      learnerContext
     );
 
     if (generated.length === 0) {
@@ -192,6 +197,7 @@ router.post('/generate', authMiddleware, async (req: Request, res: Response) => 
       question_count: questionIds.length,
       status: 'in_progress',
       question_ids: questionIds,
+      learner_context: learnerContext || null,
     });
 
     const rows = await loadOrderedQuestions(questionIds);
@@ -205,11 +211,17 @@ router.post('/generate', authMiddleware, async (req: Request, res: Response) => 
       time_per_question: TIME_PER_QUESTION_SECONDS,
       total_xp: estimateXp(generated, difficulty),
       source,
+      learner_context: learnerContext || null,
       questions: rows.map((row) => toPublicQuestion(row.doc, row.concept, row.position)),
     });
   } catch (error) {
     console.error('Generate quiz error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(503).json({
+      error:
+        error instanceof Error
+          ? error.message
+          : 'AI quiz generation is temporarily unavailable',
+    });
   }
 });
 
@@ -285,6 +297,7 @@ router.get('/:id', authMiddleware, async (req: Request, res: Response) => {
       completed_at: (quiz as any).completed_at,
       time_per_question: TIME_PER_QUESTION_SECONDS,
       total_xp: (quiz as any).xp_earned,
+      learner_context: (quiz as any).learner_context ?? null,
       questions: rows.map((row) =>
         graded
           ? {

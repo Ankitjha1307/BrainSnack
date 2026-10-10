@@ -294,6 +294,7 @@ const mapQuiz = (row: any): Quiz => ({
   timePerQuestion: num(row.time_per_question) || 30,
   totalXP: num(row.total_xp),
   source: row.source,
+  learnerContext: row.learner_context ?? null,
   questions: (row.questions ?? []).map(mapQuestion),
 });
 
@@ -368,11 +369,13 @@ export const quizzesApi = {
     topicId?: string;
     difficulty?: Difficulty;
     questionCount?: number;
+    learnerContext?: string;
   } = {}): Promise<Quiz> => {
     const body: Record<string, unknown> = {};
     if (params.topicId) body.topic_id = params.topicId;
     if (params.difficulty) body.difficulty = params.difficulty;
     if (params.questionCount) body.question_count = params.questionCount;
+    if (params.learnerContext?.trim()) body.learner_context = params.learnerContext.trim();
     return post<any>("/quizzes/generate", body).then(mapQuiz);
   },
   get: (id: string): Promise<Quiz> => get<any>(`/quizzes/${id}`).then(mapQuiz),
