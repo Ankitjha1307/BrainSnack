@@ -71,7 +71,7 @@ export function CreateChallenge({ onSubmit, onCancel }: CreateChallengeProps) {
         <div>
           <label
             htmlFor="challenge-opponent"
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5"
+            className="block text-sm font-medium text-foreground dark:text-muted mb-1.5"
           >
             Challenge someone
           </label>
@@ -92,14 +92,16 @@ export function CreateChallenge({ onSubmit, onCancel }: CreateChallengeProps) {
               <span className="text-sm font-medium text-primary-700 dark:text-primary-300 truncate">
                 {selectedOpponent.username}
               </span>
-              <button
+              <Button
                 type="button"
+                variant="danger"
+                size="sm"
                 aria-label="Remove selected opponent"
                 onClick={() => {
                   setSelectedOpponent(null);
                   setOpponentSearch("");
                 }}
-                className="ml-auto text-primary-500 hover:text-primary-700"
+                className="ml-auto h-8 w-8 p-0"
               >
                 <svg
                   className="h-4 w-4"
@@ -115,30 +117,32 @@ export function CreateChallenge({ onSubmit, onCancel }: CreateChallengeProps) {
                     d="M6 18L18 6M6 6l12 12"
                   />
                 </svg>
-              </button>
+              </Button>
             </div>
           ) : (
             opponentSearch.trim().length >= 2 && (
-              <div className="mt-2 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden max-h-48 overflow-y-auto">
-                {isSearching && <p className="p-3 text-sm text-gray-500">Searching…</p>}
+              <div className="mt-2 border border-surface-muted dark:border-foreground rounded-lg overflow-hidden max-h-48 overflow-y-auto">
+                {isSearching && <p className="p-3 text-sm text-surface-muted0">Searching…</p>}
                 {!isSearching && results?.length === 0 && (
-                  <p className="p-3 text-sm text-gray-500 dark:text-gray-400">No users found</p>
+                  <p className="p-3 text-sm text-surface-muted0 dark:text-muted">No users found</p>
                 )}
                 {results?.map((user) => (
-                  <button
+                  <Button
                     key={user.id}
                     type="button"
+                    variant="ghost"
+                    size="sm"
                     onClick={() => {
                       setSelectedOpponent(user);
                       setOpponentSearch("");
                     }}
-                    className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors text-left"
+                    className="h-auto w-full justify-start rounded-none p-3 text-left shadow-none"
                   >
                     <Avatar src={user.avatarUrl ?? undefined} alt={user.username} size="sm" />
-                    <span className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                    <span className="text-sm font-medium text-foreground dark:text-secondary-background truncate">
                       {user.username}
                     </span>
-                  </button>
+                  </Button>
                 ))}
               </div>
             )
@@ -147,65 +151,59 @@ export function CreateChallenge({ onSubmit, onCancel }: CreateChallengeProps) {
 
         {/* Topic selection */}
         <div>
-          <p className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+          <p className="block text-sm font-medium text-foreground dark:text-muted mb-1.5">
             Topic
           </p>
           <div className="grid grid-cols-2 gap-2">
-            <button
+            <Button
               type="button"
+              variant={selectedTopicId === undefined ? "primary" : "outline"}
+              size="sm"
               onClick={() => setSelectedTopicId(undefined)}
-              className={`flex items-center gap-2 p-3 rounded-lg border-2 transition-all text-left ${
-                selectedTopicId === undefined
-                  ? "border-primary-500 bg-primary-50 dark:bg-primary-900/20"
-                  : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
-              }`}
+              className="h-auto justify-start p-3 text-left"
             >
               <span className="text-lg" aria-hidden>
                 🎲
               </span>
-              <span className="text-sm font-medium text-gray-900 dark:text-white">Any topic</span>
-            </button>
+              <span className="text-sm font-medium text-foreground dark:text-secondary-background">Any topic</span>
+            </Button>
             {topics?.slice(0, 5).map((topic) => (
-              <button
+              <Button
                 key={topic.id}
                 type="button"
+                variant={selectedTopicId === topic.id ? "primary" : "outline"}
+                size="sm"
                 onClick={() => setSelectedTopicId(topic.id)}
-                className={`flex items-center gap-2 p-3 rounded-lg border-2 transition-all text-left ${
-                  selectedTopicId === topic.id
-                    ? "border-primary-500 bg-primary-50 dark:bg-primary-900/20"
-                    : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
-                }`}
+                className="h-auto justify-start p-3 text-left"
               >
                 <span className="text-lg" aria-hidden>
                   {topic.icon}
                 </span>
-                <span className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                <span className="text-sm font-medium text-foreground dark:text-secondary-background truncate">
                   {topic.name}
                 </span>
-              </button>
+              </Button>
             ))}
           </div>
         </div>
 
         {/* Target score */}
         <div>
-          <p className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+          <p className="block text-sm font-medium text-foreground dark:text-muted mb-1.5">
             Score to win (% correct)
           </p>
           <div className="flex gap-2">
             {TARGET_SCORES.map((score) => (
-              <button
+              <Button
                 key={score}
                 type="button"
+                variant={targetScore === score ? "primary" : "outline"}
+                size="sm"
                 onClick={() => setTargetScore(score)}
-                className={`flex-1 py-2 rounded-lg border-2 text-sm font-medium transition-all ${
-                  targetScore === score
-                    ? "border-primary-500 bg-primary-50 text-primary-700 dark:bg-primary-900/20 dark:text-primary-300"
-                    : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-300"
-                }`}
+                className="flex-1"
               >
                 {score}%
-              </button>
+              </Button>
             ))}
           </div>
         </div>

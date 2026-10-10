@@ -20,19 +20,19 @@ export function TopicProgress({ topicMastery }: TopicProgressProps) {
           <div key={tm.topicId} className="space-y-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                <span className="text-sm font-medium text-foreground dark:text-muted">
                   {tm.topicName}
                 </span>
-                <span className="text-xs text-gray-400 dark:text-gray-500 capitalize">
+                <span className="text-xs text-muted dark:text-surface-muted0 capitalize">
                   {tm.difficultyLevel}
                 </span>
               </div>
-              <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
+              <span className="text-sm font-medium text-surface-muted0 dark:text-muted">
                 {tm.mastery}%
               </span>
             </div>
             <Progress value={tm.mastery} size="sm" />
-            <div className="flex items-center justify-between text-xs text-gray-400 dark:text-gray-500">
+            <div className="flex items-center justify-between text-xs text-muted dark:text-surface-muted0">
               <span>{tm.questionsAttempted} attempted</span>
               <span>
                 {tm.questionsCorrect} correct ({tm.accuracy}%)

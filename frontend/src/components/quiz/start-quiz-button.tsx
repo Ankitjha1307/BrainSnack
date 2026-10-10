@@ -55,7 +55,7 @@ export function StartQuizButton({
       <Button onClick={start} variant={variant} size={size} isLoading={isLoading} className="w-full">
         {label}
       </Button>
-      {error && <p className="mt-2 text-xs text-red-600 dark:text-red-400">{error}</p>}
+      {error && <p className="mt-2 text-xs text-foreground dark:text-foreground">{error}</p>}
     </div>
   );
 }

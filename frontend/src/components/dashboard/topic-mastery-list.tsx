@@ -45,16 +45,16 @@ export function TopicMasteryList({ mastery }: TopicMasteryListProps) {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 min-w-0">
                   <span aria-hidden>{topic.topicIcon}</span>
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+                  <span className="text-sm font-medium text-foreground dark:text-muted truncate group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
                     {topic.topicName}
                   </span>
                 </div>
-                <span className="text-sm font-medium text-gray-500 dark:text-gray-400 shrink-0 ml-2">
+                <span className="text-sm font-medium text-surface-muted0 dark:text-muted shrink-0 ml-2">
                   {topic.mastery}%
                 </span>
               </div>
               <Progress value={topic.mastery} size="sm" />
-              <p className="text-xs text-gray-400 dark:text-gray-500">
+              <p className="text-xs text-muted dark:text-surface-muted0">
                 {topic.questionsCorrect}/{topic.questionsAttempted} correct
               </p>
             </Link>

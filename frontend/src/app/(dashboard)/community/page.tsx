@@ -8,6 +8,7 @@ import { WhoToFollow } from "@/components/community/who-to-follow";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
 import { ErrorNotice } from "@/components/ui/state";
+import { Button } from "@/components/ui/button";
 import { postsApi } from "@/lib/api";
 import { useResource } from "@/hooks/useResource";
 import { useCompose } from "@/context/ComposeContext";
@@ -98,23 +99,24 @@ export default function CommunityPage() {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Community</h1>
-        <p className="text-gray-500 dark:text-gray-400 mt-1">
+        <h1 className="text-2xl font-bold text-foreground dark:text-secondary-background">Community</h1>
+        <p className="text-surface-muted0 dark:text-muted mt-1">
           Share your progress and connect with others
         </p>
       </div>
 
       {/* X-style compose prompt: tapping it opens the shared composer modal. */}
-      <button
+      <Button
         type="button"
+        variant="secondary"
         onClick={() => openCompose()}
-        className="flex w-full items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 text-left hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700/50 transition-colors"
+        className="h-auto w-full justify-start p-4 text-left"
       >
         {user && <Avatar src={user.avatarUrl ?? undefined} alt={user.username} size="md" />}
-        <span className="text-gray-400 dark:text-gray-500">
+        <span className="text-muted dark:text-surface-muted0">
           Share your achievement or thought...
         </span>
-      </button>
+      </Button>
 
       <FeedTabs
         tabs={[
@@ -144,7 +146,7 @@ export default function CommunityPage() {
       {tab === "discover" && (
         <Card>
           <CardContent className="pt-5">
-            <h2 className="mb-3 text-base font-semibold text-gray-900 dark:text-white">
+            <h2 className="mb-3 text-base font-semibold text-foreground dark:text-secondary-background">
               Who to follow
             </h2>
             <WhoToFollow />

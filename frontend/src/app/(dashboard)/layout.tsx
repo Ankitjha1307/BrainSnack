@@ -3,8 +3,6 @@
 import React from "react";
 import { useRouter } from "next/navigation";
 import { Navbar } from "@/components/layout/navbar";
-import { Sidebar } from "@/components/layout/sidebar";
-import { MobileNav } from "@/components/layout/mobile-nav";
 import { ComposeFab } from "@/components/community/compose-button";
 import { ComposeModal } from "@/components/community/compose-modal";
 import { ComposeProvider } from "@/context/ComposeContext";
@@ -24,10 +22,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   // renders the dashboard chrome for an unauthenticated visitor.
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-3">
-          <div className="h-8 w-8 rounded-full border-2 border-primary-200 border-t-primary-600 animate-spin" />
-          <p className="text-sm text-gray-500 dark:text-gray-400">Checking your session…</p>
+          <div className="h-8 w-8 rounded-full border-2 border-border-200 border-t-primary-600 animate-spin" />
+          <p className="text-sm text-surface-muted0 dark:text-muted">Checking your session…</p>
         </div>
       </div>
     );
@@ -37,15 +35,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <ComposeProvider>
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="min-h-screen overflow-x-hidden bg-background">
         <Navbar />
-        <div className="flex">
-          <Sidebar />
-          <main className="flex-1 p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8">
-            {children}
-          </main>
-        </div>
-        <MobileNav />
+        <main className="mx-auto w-full max-w-[1440px] p-4 pb-28 sm:p-6 sm:pb-28 lg:p-8 lg:pb-32">
+          {children}
+        </main>
         <ComposeFab />
         <ComposeModal />
       </div>

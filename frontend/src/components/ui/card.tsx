@@ -25,8 +25,8 @@ export function Card({
   return (
     <div
       className={cn(
-        "bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm",
-        hover && "transition-all duration-200 hover:shadow-md hover:border-primary-300 dark:hover:border-primary-700 hover:-translate-y-0.5",
+        "rounded-base border-2 border-border bg-surface shadow-shadow",
+        hover && "transition-transform duration-150 hover:-translate-x-1 hover:-translate-y-1",
         paddingStyles[padding],
         className
       )}
@@ -43,7 +43,7 @@ export function CardHeader({
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={cn("mb-4", className)} {...props}>
+    <div className={cn("mb-4 space-y-1", className)} {...props}>
       {children}
     </div>
   );
@@ -55,7 +55,7 @@ export function CardTitle({
   ...props
 }: React.HTMLAttributes<HTMLHeadingElement>) {
   return (
-    <h3 className={cn("text-lg font-semibold text-gray-900 dark:text-white", className)} {...props}>
+    <h3 className={cn("text-lg font-semibold text-foreground", className)} {...props}>
       {children}
     </h3>
   );
@@ -79,7 +79,7 @@ export function CardFooter({
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={cn("mt-4 pt-4 border-t border-gray-100 dark:border-gray-700", className)} {...props}>
+    <div className={cn("mt-4 border-t-2 border-border pt-4", className)} {...props}>
       {children}
     </div>
   );

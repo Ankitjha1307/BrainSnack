@@ -47,7 +47,7 @@ export function QuizCard({
         <CardTitle className="text-2xl mt-3">
           {resuming ? "Pick up where you left off" : "Ready to snack?"}
         </CardTitle>
-        <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
+        <p className="text-surface-muted0 dark:text-muted text-sm mt-1">
           {resuming
             ? `${answeredCount} of ${quiz.questions.length} answered`
             : `${quiz.questions.length} questions · about ${Math.ceil(
@@ -60,23 +60,23 @@ export function QuizCard({
         {error && <ErrorNotice message={error} />}
 
         <div className="grid grid-cols-3 gap-3">
-          <div className="text-center p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+          <div className="text-center p-3 bg-surface-muted dark:bg-foreground/50 rounded-lg">
             <p className="text-2xl font-bold text-primary-600 dark:text-primary-400">
               {quiz.questions.length}
             </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Questions</p>
+            <p className="text-xs text-surface-muted0 dark:text-muted">Questions</p>
           </div>
-          <div className="text-center p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+          <div className="text-center p-3 bg-surface-muted dark:bg-foreground/50 rounded-lg">
             <p className="text-2xl font-bold text-accent-600 dark:text-accent-400">
               {quiz.totalXP}
             </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Max XP</p>
+            <p className="text-xs text-surface-muted0 dark:text-muted">Max XP</p>
           </div>
-          <div className="text-center p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-            <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+          <div className="text-center p-3 bg-surface-muted dark:bg-foreground/50 rounded-lg">
+            <p className="text-2xl font-bold text-foreground dark:text-foreground">
               {quiz.timePerQuestion}s
             </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Per question</p>
+            <p className="text-xs text-surface-muted0 dark:text-muted">Per question</p>
           </div>
         </div>
 

@@ -18,9 +18,9 @@ interface QuizResultsProps {
 }
 
 const gradeFor = (score: number) => {
-  if (score === 100) return { label: "Flawless!", tone: "text-emerald-600 dark:text-emerald-400" };
+  if (score === 100) return { label: "Flawless!", tone: "text-foreground dark:text-foreground" };
   if (score >= 80) return { label: "Great work!", tone: "text-primary-600 dark:text-primary-400" };
-  if (score >= 60) return { label: "Good effort!", tone: "text-amber-600 dark:text-amber-400" };
+  if (score >= 60) return { label: "Good effort!", tone: "text-foreground dark:text-foreground" };
   return { label: "Keep going!", tone: "text-rose-600 dark:text-rose-400" };
 };
 
@@ -34,7 +34,7 @@ export function QuizResults({ result, topicName, onRetake, onBack, onShare }: Qu
     <Card padding="none" className="max-w-lg mx-auto animate-fade-in">
       <CardHeader className="pt-6 text-center mb-0">
         <div className="h-16 w-16 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center mx-auto mb-4">
-          <svg className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="h-8 w-8 text-secondary-background" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -58,7 +58,7 @@ export function QuizResults({ result, topicName, onRetake, onBack, onShare }: Qu
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="8"
-                className="text-gray-200 dark:text-gray-700"
+                className="text-surface-muted dark:text-foreground"
               />
               <circle
                 cx="60"
@@ -73,10 +73,10 @@ export function QuizResults({ result, topicName, onRetake, onBack, onShare }: Qu
               />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-3xl font-bold text-gray-900 dark:text-white">
+              <span className="text-3xl font-bold text-foreground dark:text-secondary-background">
                 {result.score}%
               </span>
-              <span className="text-sm text-gray-500 dark:text-gray-400">
+              <span className="text-sm text-surface-muted0 dark:text-muted">
                 {result.correctAnswers}/{result.totalQuestions}
               </span>
             </div>
@@ -93,37 +93,37 @@ export function QuizResults({ result, topicName, onRetake, onBack, onShare }: Qu
             </span>
           </div>
           {result.perfectBonus > 0 && (
-            <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-2">
+            <p className="text-xs text-foreground dark:text-foreground mt-2">
               Includes a +{result.perfectBonus} XP perfect-score bonus
             </p>
           )}
         </div>
 
         <div className="grid grid-cols-3 gap-3">
-          <div className="text-center p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-            <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
+          <div className="text-center p-3 bg-surface-muted dark:bg-foreground/50 rounded-lg">
+            <p className="text-lg font-bold text-foreground dark:text-foreground">
               {result.correctAnswers}
             </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Correct</p>
+            <p className="text-xs text-surface-muted0 dark:text-muted">Correct</p>
           </div>
-          <div className="text-center p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+          <div className="text-center p-3 bg-surface-muted dark:bg-foreground/50 rounded-lg">
             <p className="text-lg font-bold text-rose-600 dark:text-rose-400">
               {result.totalQuestions - result.correctAnswers}
             </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Missed</p>
+            <p className="text-xs text-surface-muted0 dark:text-muted">Missed</p>
           </div>
-          <div className="text-center p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-            <p className="text-lg font-bold text-gray-900 dark:text-white">
+          <div className="text-center p-3 bg-surface-muted dark:bg-foreground/50 rounded-lg">
+            <p className="text-lg font-bold text-foreground dark:text-secondary-background">
               {result.personalBest}%
             </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Personal best</p>
+            <p className="text-xs text-surface-muted0 dark:text-muted">Personal best</p>
           </div>
         </div>
 
         {result.streak && result.streak.current > 0 && (
           <div className="flex items-center justify-center gap-2 text-sm">
             <span aria-hidden>🔥</span>
-            <span className="text-gray-700 dark:text-gray-300">
+            <span className="text-foreground dark:text-muted">
               {result.streak.current}-day streak
             </span>
             {result.streak.current === result.streak.longest && (
@@ -136,7 +136,7 @@ export function QuizResults({ result, topicName, onRetake, onBack, onShare }: Qu
 
         {result.newBadges.length > 0 && (
           <div className="space-y-2">
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 text-center">
+            <p className="text-sm font-medium text-foreground dark:text-muted text-center">
               New badge{result.newBadges.length > 1 ? "s" : ""} unlocked
             </p>
             <div className="flex flex-wrap justify-center gap-2">

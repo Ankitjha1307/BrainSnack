@@ -55,9 +55,9 @@ export default function ProfilePage() {
       <ProfileHeader user={user} />
 
       {isGuest && (
-        <Card className="border-amber-300 dark:border-amber-700">
+        <Card className="border-border dark:border-border">
           <CardContent className="pt-5 flex flex-col sm:flex-row sm:items-center gap-3">
-            <p className="text-sm text-gray-600 dark:text-gray-300 flex-1">
+            <p className="text-sm text-muted dark:text-muted flex-1">
               You&apos;re signed in as a guest. Your progress lives in this browser session and
               cannot be signed back into later.
             </p>
@@ -85,7 +85,7 @@ export default function ProfilePage() {
 
       <Card>
         <CardContent className="pt-5">
-          <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-4">
+          <h2 className="text-base font-semibold text-foreground dark:text-secondary-background mb-4">
             Quiz history
           </h2>
           {progress.recentQuizzes.length === 0 ? (
@@ -107,19 +107,19 @@ export default function ProfilePage() {
               {progress.recentQuizzes.map((quiz) => (
                 <div
                   key={quiz.id}
-                  className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700 last:border-0"
+                  className="flex items-center justify-between py-2 border-b border-surface-muted dark:border-foreground last:border-0"
                 >
                   <div className="min-w-0 pr-3">
-                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                    <p className="text-sm font-medium text-foreground dark:text-secondary-background truncate">
                       {quiz.topicName ?? "Mixed quiz"}
                     </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                    <p className="text-xs text-surface-muted0 dark:text-muted">
                       {quiz.questionCount} questions ·{" "}
                       {quiz.completedAt ? formatRelativeTime(quiz.completedAt) : quiz.status}
                     </p>
                   </div>
                   <div className="text-right shrink-0">
-                    <p className="text-sm font-bold text-gray-900 dark:text-white">{quiz.score}%</p>
+                    <p className="text-sm font-bold text-foreground dark:text-secondary-background">{quiz.score}%</p>
                     <p className="text-xs text-accent-600 dark:text-accent-400">+{quiz.xpEarned} XP</p>
                   </div>
                 </div>
@@ -132,7 +132,7 @@ export default function ProfilePage() {
       {isGuest && (
         <Card>
           <CardContent className="pt-5">
-            <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-4">
+            <h2 className="text-base font-semibold text-foreground dark:text-secondary-background mb-4">
               Your posts
             </h2>
             {myPosts && myPosts.length > 0 ? (
@@ -142,21 +142,21 @@ export default function ProfilePage() {
                   return (
                     <div
                       key={post.id}
-                      className="py-2 border-b border-gray-100 dark:border-gray-700 last:border-0"
+                      className="py-2 border-b border-surface-muted dark:border-foreground last:border-0"
                     >
-                      <p className="text-sm text-gray-700 dark:text-gray-300">{text}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      <p className="text-sm text-foreground dark:text-muted">{text}</p>
+                      <p className="text-xs text-surface-muted0 dark:text-muted mt-1">
                         {formatRelativeTime(post.createdAt)} · {post.likesCount} likes
                       </p>
                     </div>
                   );
                 })}
-                <p className="text-xs text-gray-400 dark:text-gray-500 pt-1">
+                <p className="text-xs text-muted dark:text-surface-muted0 pt-1">
                   Guest posts are hidden from the public community feed.
                 </p>
               </div>
             ) : (
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-sm text-surface-muted0 dark:text-muted">
                 You haven&apos;t posted anything yet.
               </p>
             )}

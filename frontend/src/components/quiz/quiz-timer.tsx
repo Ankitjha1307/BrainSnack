@@ -14,13 +14,13 @@ export function QuizTimer({ timeRemaining, totalTime }: QuizTimerProps) {
   const isCritical = timeRemaining <= 3;
 
   const getColor = () => {
-    if (isCritical) return "text-red-500";
+    if (isCritical) return "text-foreground";
     if (isLow) return "text-accent-500";
     return "text-primary-500";
   };
 
   const getStrokeColor = () => {
-    if (isCritical) return "stroke-red-500";
+    if (isCritical) return "stroke-error";
     if (isLow) return "stroke-accent-500";
     return "stroke-primary-500";
   };
@@ -39,7 +39,7 @@ export function QuizTimer({ timeRemaining, totalTime }: QuizTimerProps) {
             fill="none"
             stroke="currentColor"
             strokeWidth="4"
-            className="text-gray-200 dark:text-gray-700"
+            className="text-surface-muted dark:text-foreground"
           />
           <circle
             cx="24"

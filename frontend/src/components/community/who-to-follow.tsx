@@ -47,10 +47,10 @@ export function WhoToFollow({ onFollowed }: WhoToFollowProps) {
       <div className="space-y-2">
         {[1, 2, 3].map((i) => (
           <div key={i} className="flex items-center gap-3 animate-pulse">
-            <div className="h-8 w-8 rounded-full bg-gray-200 dark:bg-gray-700" />
+            <div className="h-8 w-8 rounded-full bg-surface-muted dark:bg-foreground" />
             <div className="flex-1 space-y-1.5">
-              <div className="h-3 w-1/3 rounded bg-gray-200 dark:bg-gray-700" />
-              <div className="h-3 w-1/4 rounded bg-gray-200 dark:bg-gray-700" />
+              <div className="h-3 w-1/3 rounded bg-surface-muted dark:bg-foreground" />
+              <div className="h-3 w-1/4 rounded bg-surface-muted dark:bg-foreground" />
             </div>
           </div>
         ))}
@@ -59,13 +59,13 @@ export function WhoToFollow({ onFollowed }: WhoToFollowProps) {
   }
 
   if (error) {
-    return <p className="text-sm text-gray-500 dark:text-gray-400">{error}</p>;
+    return <p className="text-sm text-surface-muted0 dark:text-muted">{error}</p>;
   }
 
   const users = data ?? [];
   if (users.length === 0) {
     return (
-      <p className="text-sm text-gray-500 dark:text-gray-400">
+      <p className="text-sm text-surface-muted0 dark:text-muted">
         You&apos;re following everyone already. Nice.
       </p>
     );
@@ -80,10 +80,10 @@ export function WhoToFollow({ onFollowed }: WhoToFollowProps) {
             <Link href={`/u/${user.id}`} className="flex min-w-0 flex-1 items-center gap-3">
               <Avatar src={user.avatarUrl ?? undefined} alt={user.username} size="sm" />
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-gray-900 dark:text-white">
+                <p className="truncate text-sm font-medium text-foreground dark:text-secondary-background">
                   {user.displayName || user.username}
                 </p>
-                <p className="truncate text-xs text-gray-500 dark:text-gray-400">
+                <p className="truncate text-xs text-surface-muted0 dark:text-muted">
                   @{user.username} · Lv {user.level}
                 </p>
               </div>

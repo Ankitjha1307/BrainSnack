@@ -37,7 +37,7 @@ export function MilestoneCard({
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-2xl bg-gradient-to-br text-white shadow-lg ring-1",
+        "relative overflow-hidden rounded-base border-2 border-border bg-main text-foreground shadow-shadow",
         theme.gradient,
         theme.ring,
         theme.glow,
@@ -46,8 +46,8 @@ export function MilestoneCard({
       )}
     >
       {/* Soft light bloom for depth. */}
-      <div className="pointer-events-none absolute -right-12 -top-12 h-44 w-44 rounded-full bg-white/15 blur-2xl" />
-      <div className="pointer-events-none absolute -bottom-16 -left-10 h-40 w-40 rounded-full bg-black/10 blur-2xl" />
+      <div className="pointer-events-none absolute -right-12 -top-12 h-44 w-44 rounded-full bg-foreground/10" />
+      <div className="pointer-events-none absolute -bottom-16 -left-10 h-40 w-40 rounded-full bg-foreground/10" />
 
       <div className="relative flex items-center justify-between gap-3">
         <span
@@ -59,7 +59,7 @@ export function MilestoneCard({
           <span aria-hidden>{milestone.icon}</span>
           {milestone.title}
         </span>
-        <span className="text-[10px] font-bold uppercase tracking-widest text-white/70">
+        <span className="text-[10px] font-bold uppercase tracking-widest text-foreground">
           BrainSnack
         </span>
       </div>
@@ -72,7 +72,7 @@ export function MilestoneCard({
       >
         <span
           className={cn(
-            "font-black leading-none drop-shadow-sm",
+            "font-foreground leading-none drop-shadow-sm",
             preview ? "text-6xl" : "text-3xl"
           )}
         >
@@ -81,7 +81,7 @@ export function MilestoneCard({
         {milestone.subtitle && (
           <span
             className={cn(
-              "mt-2 font-medium text-white/90",
+              "mt-2 font-medium text-foreground",
               preview ? "text-sm" : "text-xs"
             )}
           >
@@ -91,7 +91,7 @@ export function MilestoneCard({
       </div>
 
       <div className="relative flex items-center gap-2">
-        <span className="rounded-full ring-2 ring-white/50">
+        <span className="rounded-full ring-2 ring-border">
           <Avatar
             src={user.avatarUrl ?? undefined}
             alt={user.username}
@@ -103,7 +103,7 @@ export function MilestoneCard({
           <p className={cn("truncate font-semibold", preview ? "text-sm" : "text-xs")}>
             {user.displayName || user.username}
           </p>
-          <p className={cn("truncate text-white/75", preview ? "text-xs" : "text-[10px]")}>
+          <p className={cn("truncate text-foreground", preview ? "text-xs" : "text-[10px]")}>
             @{user.username}
             {user.level ? ` · Lv ${user.level}` : ""}
           </p>

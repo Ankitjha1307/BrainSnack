@@ -23,10 +23,10 @@ export function Progress({
   const percentage = Math.min(Math.max((value / max) * 100, 0), 100);
 
   const variants = {
-    default: "bg-primary-600",
-    success: "bg-green-500",
-    warning: "bg-accent-500",
-    danger: "bg-red-500",
+    default: "bg-primary-500",
+    success: "bg-success",
+    warning: "bg-warning",
+    danger: "bg-error",
   };
 
   const sizes = {
@@ -39,17 +39,17 @@ export function Progress({
     <div className={cn("w-full", className)}>
       {showLabel && (
         <div className="flex justify-between mb-1">
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          <span className="text-sm font-medium text-muted">
             Progress
           </span>
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          <span className="text-sm font-medium text-muted">
             {Math.round(percentage)}%
           </span>
         </div>
       )}
-      <div className={cn("w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden", sizes[size])}>
+      <div className={cn("w-full overflow-hidden rounded-base border-2 border-border bg-surface-muted", sizes[size])}>
         <div
-          className={cn("h-full rounded-full transition-all duration-500 ease-out", variants[variant])}
+          className={cn("h-full border-r-2 border-border transition-all duration-500 ease-out", variants[variant])}
           style={{ width: `${percentage}%` }}
         />
       </div>

@@ -35,9 +35,9 @@ export function Avatar({
   };
 
   const statusColors = {
-    online: "bg-green-500",
-    offline: "bg-gray-400",
-    away: "bg-yellow-500",
+    online: "bg-success",
+    offline: "bg-muted",
+    away: "bg-warning",
   };
 
   const getFallback = () => {
@@ -57,7 +57,7 @@ export function Avatar({
       ) : (
         <div
           className={cn(
-            "rounded-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white font-medium",
+            "rounded-full border-2 border-border bg-main flex items-center justify-center text-main-foreground font-bold",
             sizes[size]
           )}
         >
@@ -67,7 +67,7 @@ export function Avatar({
       {status && (
         <span
           className={cn(
-            "absolute bottom-0 right-0 rounded-full border-2 border-white dark:border-gray-800",
+            "absolute bottom-0 right-0 rounded-full border-2 border-border",
             statusSizes[size],
             statusColors[status]
           )}

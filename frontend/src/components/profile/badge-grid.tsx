@@ -20,7 +20,7 @@ export function BadgeGrid({ badges }: BadgeGridProps) {
         <CardTitle className="text-base">
           Badges
           {earned.length > 0 && (
-            <span className="ml-2 text-sm font-normal text-gray-500 dark:text-gray-400">
+            <span className="ml-2 text-sm font-normal text-surface-muted0 dark:text-muted">
               {earned.length}/{badges.length}
             </span>
           )}
@@ -28,7 +28,7 @@ export function BadgeGrid({ badges }: BadgeGridProps) {
       </CardHeader>
       <CardContent className="space-y-5">
         {badges.length === 0 ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-sm text-surface-muted0 dark:text-muted">
             No badges available yet.
           </p>
         ) : (
@@ -39,12 +39,12 @@ export function BadgeGrid({ badges }: BadgeGridProps) {
                   <div
                     key={badge.id}
                     title={`${badge.name} — earned ${formatDate(badge.earnedAt!)}`}
-                    className="flex flex-col items-center p-3 rounded-lg text-center bg-gray-50 dark:bg-gray-700/50"
+                    className="flex flex-col items-center p-3 rounded-lg text-center bg-surface-muted dark:bg-foreground/50"
                   >
                     <span className="text-2xl mb-1" aria-hidden>
                       {badge.icon}
                     </span>
-                    <span className="text-xs font-medium text-gray-700 dark:text-gray-300 leading-tight">
+                    <span className="text-xs font-medium text-foreground dark:text-muted leading-tight">
                       {badge.name}
                     </span>
                   </div>
@@ -53,8 +53,8 @@ export function BadgeGrid({ badges }: BadgeGridProps) {
             )}
 
             {locked.length > 0 && (
-              <div className="space-y-3 pt-1 border-t border-gray-100 dark:border-gray-700">
-                <p className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+              <div className="space-y-3 pt-1 border-t border-surface-muted dark:border-foreground">
+                <p className="text-xs font-medium uppercase tracking-wide text-surface-muted0 dark:text-muted">
                   Still to earn
                 </p>
                 {locked.map((badge) => {
@@ -66,11 +66,11 @@ export function BadgeGrid({ badges }: BadgeGridProps) {
                           <span className={cn("text-lg", "opacity-40")} aria-hidden>
                             {badge.icon}
                           </span>
-                          <span className="text-xs font-medium text-gray-600 dark:text-gray-400 truncate">
+                          <span className="text-xs font-medium text-muted dark:text-muted truncate">
                             {badge.name}
                           </span>
                         </div>
-                        <span className="text-xs text-gray-400 dark:text-gray-500 shrink-0">
+                        <span className="text-xs text-muted dark:text-surface-muted0 shrink-0">
                           {badge.current ?? 0}/{badge.criteriaValue}
                         </span>
                       </div>
