@@ -1,4 +1,6 @@
-export const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
+// Browser requests go through the Next.js same-origin proxy. Set
+// NEXT_PUBLIC_API_URL only when intentionally calling a separate API host.
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || "/api";
 
 export const DIFFICULTY_LABELS: Record<string, string> = {
   easy: "Easy",

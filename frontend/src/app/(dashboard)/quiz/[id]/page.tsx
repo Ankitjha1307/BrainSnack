@@ -144,6 +144,25 @@ function QuizPlayer() {
             </CardContent>
           </Card>
         )}
+        {quiz.learnerContext && (
+          <Card>
+            <CardContent className="pt-4">
+              <p className="text-xs font-bold uppercase tracking-wide text-foreground">
+                Your learning context
+              </p>
+              <p className="mt-1 whitespace-pre-wrap text-sm text-foreground">
+                {quiz.learnerContext}
+              </p>
+            </CardContent>
+          </Card>
+        )}
+        <p className="text-xs font-medium text-black">
+          {quiz.source === "ai"
+            ? "Personalized by Gemini"
+            : quiz.source === "bank"
+              ? "From the BrainSnack question bank"
+              : "Offline demo mode"}
+        </p>
         <QuizCard
           quiz={quiz}
           onStart={startQuiz}

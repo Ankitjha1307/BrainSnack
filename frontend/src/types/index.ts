@@ -77,8 +77,9 @@ export interface Quiz {
   questionCount: number;
   timePerQuestion: number;
   totalXP: number;
-  /** "ai" when Gemini/mock provider served it, "bank" when the local question bank fallback did. */
-  source?: "ai" | "bank";
+  /** "dummy" is only used as the final offline demo fallback. */
+  source?: "ai" | "bank" | "dummy";
+  learnerContext?: string | null;
   questions: Question[];
 }
 

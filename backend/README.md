@@ -186,7 +186,8 @@ and adaptive recommendations are served by a TypeScript provider selected with
 `AI_PROVIDER`:
 
 - `mock` (default) — offline question bank, no API key needed
-- `gemini` — calls the Gemini REST API using `GEMINI_API_KEY`
+- `gemini` — calls Google Gemini through the official `@google/genai` SDK using
+  `GEMINI_API_KEY`
 
 The product UI reaches AI through `POST /api/quizzes/generate` (authenticated,
 persists its output). Developer/tooling endpoints live under `/api/ai`:
@@ -224,3 +225,11 @@ After seeding, you can login with any of these accounts (password: `password123`
 ## License
 
 MIT
+## Gemini model fallback
+
+Set `AI_PROVIDER=mesh` and provide `MESH_API_KEY`. MeshAPI uses an
+OpenAI-compatible paid Gemini endpoint and tries the
+comma-separated `MESH_MODELS` list in order for quiz generation, question
+validation, and adaptive recommendations. It uses the local question bank only
+after all configured Gemini models fail. If both AI and the bank are empty, the
+API uses a clearly marked offline demo fallback so a presentation can continue.

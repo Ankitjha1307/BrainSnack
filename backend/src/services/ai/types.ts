@@ -16,6 +16,7 @@ export interface QuizRequest {
   weak_concepts: string[];
   recent_mistakes: string[];
   user_performance?: Record<string, unknown>;
+  learner_context?: string;
 }
 
 /** A question as a provider produces it (camelCase `correctAnswer`, like the Python service). */
@@ -65,7 +66,7 @@ export interface AdaptiveRecommendationResult {
 }
 
 export interface AIProvider {
-  readonly name: 'mock' | 'gemini';
+  readonly name: 'mock' | 'gemini' | 'mesh';
   generateQuiz(request: QuizRequest): Promise<QuizResponse>;
   validateQuestion(request: QuestionValidationRequest): Promise<QuestionValidationResult>;
   getAdaptiveRecommendation(

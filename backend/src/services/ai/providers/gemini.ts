@@ -1,4 +1,5 @@
 
+import { GoogleGenAI } from '@google/genai';
 import { config } from '../../../config/index';
 import {
   AIProvider,
@@ -12,90 +13,156 @@ import {
   QuizResponse,
 } from '../types';
 
-const GEMINI_BASE =
-  'https://generativelanguage.googleapis.com/v1beta/models';
-
 const isDifficulty = (value: unknown): value is Difficulty =>
   value === 'easy' || value === 'medium' || value === 'hard';
+
+const cleanText = (value: string): string =>
+  value
+    .replace(/```[\s\S]*?```/g, '')
+    .replace(/\*\*(.*?)\*\*/g, '$1')
+    .replace(/__(.*?)__/g, '$1')
+    .replace(/^#+\s*/gm, '')
+    .replace(/\s+/g, ' ')
+    .trim();
 
 /**
  * Gemini provider.
  *
- * Uses Google's Generative Language REST API directly with fetch.
- * Validates generated questions before returning them to the application.
+ * Uses Google's official server-side SDK. The API key never reaches the
+ * browser; the Express route remains responsible for auth and persistence.
  */
 export class GeminiAIProvider implements AIProvider {
-  readonly name = 'gemini' as const;
+  readonly name = config.ai.provider === 'mesh' ? ('mesh' as const) : ('gemini' as const);
 
-  private readonly apiKey = config.ai.geminiApiKey;
-  private readonly model = config.ai.geminiModel;
+  private readonly client =
+    config.ai.provider === 'gemini'
+      ? new GoogleGenAI({ apiKey: config.ai.geminiApiKey })
+      : null;
+  private readonly models =
+    config.ai.provider === 'mesh' ? config.ai.meshModels : config.ai.geminiModels;
 
-  private async call(prompt: string): Promise<string> {
-    const controller = new AbortController();
-
-    const timeoutId = setTimeout(
-      () => controller.abort(),
-      config.ai.timeout
-    );
+  private async call(prompt: string, model: string): Promise<string> {
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+    const timeout = new Promise<never>((_, reject) => {
+      timeoutId = setTimeout(
+        () => reject(new Error(`Gemini timed out after ${config.ai.timeout}ms`)),
+        config.ai.timeout
+      );
+    });
 
     try {
-      const response = await fetch(
-        `${GEMINI_BASE}/${this.model}:generateContent?key=${encodeURIComponent(
-          this.apiKey
-        )}`,
-        {
+      if (config.ai.provider === 'mesh') {
+        console.info(`[${this.name}] requesting model "${model}"`);
+        const response = await fetch(`${config.ai.meshBaseUrl}/chat/completions`, {
           method: 'POST',
           headers: {
+            Authorization: `Bearer ${config.ai.meshApiKey}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            contents: [
-              {
-                parts: [{ text: prompt }],
-              },
-            ],
-            generationConfig: {
-              temperature: 0.8,
-            },
+            model,
+            messages: [{ role: 'user', content: prompt }],
+            temperature: 0.35,
+            response_format: { type: 'json_object' },
           }),
-          signal: controller.signal,
+          signal: AbortSignal.timeout(config.ai.timeout),
+        });
+
+        const data = (await response.json().catch(() => null)) as {
+          error?: { message?: string };
+          choices?: Array<{ message?: { content?: string | Array<{ text?: string }> } }>;
+        } | null;
+        if (!response.ok) {
+          console.error(`[${this.name}] request failed`, {
+            model,
+            status: response.status,
+            error: data?.error?.message || 'request failed',
+          });
+          throw new Error(
+            `MeshAPI returned ${response.status}: ${
+              data?.error?.message || 'request failed'
+            }`
+          );
         }
-      );
 
-      if (!response.ok) {
-        const body = await response.text().catch(() => '');
-
-        throw new Error(
-          `Gemini returned ${response.status}${
-            body ? `: ${body.slice(0, 300)}` : ''
-          }`
-        );
+        const content = data?.choices?.[0]?.message?.content;
+        const text = Array.isArray(content)
+          ? content.map((part) => part.text ?? '').join('')
+          : content ?? '';
+        if (!text.trim()) throw new Error('MeshAPI returned an empty response');
+        return text;
       }
 
-      const data = (await response.json()) as {
-        candidates?: Array<{
-          content?: {
-            parts?: Array<{ text?: string }>;
-          };
-        }>;
-      };
+      if (!this.client) throw new Error('Google Gemini client is not configured');
+      const response = await Promise.race([
+        this.client.models.generateContent({
+          model,
+          contents: prompt,
+          config: {
+            temperature: 0.35,
+            responseMimeType: 'application/json',
+          },
+        }),
+        timeout,
+      ]);
 
-      const text =
-        data.candidates?.[0]?.content?.parts
-          ?.map((part) => part.text ?? '')
-          .join('') ?? '';
-
-      if (!text.trim()) {
-        throw new Error('Gemini returned an empty response');
-      }
-
+      const text = response.text ?? '';
+      if (!text.trim()) throw new Error('Gemini returned an empty response');
       return text;
     } finally {
-      clearTimeout(timeoutId);
+      if (timeoutId) clearTimeout(timeoutId);
     }
   }
 
+  private async callWithFallback(prompt: string): Promise<string> {
+    let lastError: unknown;
+    for (const model of this.models) {
+      try {
+        return await this.call(prompt, model);
+      } catch (error) {
+        lastError = error;
+        console.warn(
+          `[${this.name}] model "${model}" failed: ${
+            error instanceof Error ? error.message : 'Unknown error'
+          }`
+        );
+      }
+    }
+    throw lastError instanceof Error
+      ? lastError
+      : new Error('All configured Gemini models failed');
+  }
+
   async generateQuiz(request: QuizRequest): Promise<QuizResponse> {
+    let lastError: unknown;
+    for (const model of this.models) {
+      try {
+        const response = await this.generateQuizWithModel(request, model);
+        if (response.questions.length >= request.question_count) {
+          return response;
+        }
+        lastError = new Error(
+          `${model} returned ${response.questions.length}/${request.question_count} valid questions`
+        );
+      } catch (error) {
+        lastError = error;
+        console.warn(
+          `[${this.name}] model "${model}" failed: ${
+            error instanceof Error ? error.message : 'Unknown error'
+          }`
+        );
+      }
+    }
+
+    throw lastError instanceof Error
+      ? lastError
+      : new Error('All configured Gemini models failed');
+  }
+
+  private async generateQuizWithModel(
+    request: QuizRequest,
+    model: string
+  ): Promise<QuizResponse> {
     const weakConcepts = request.weak_concepts?.length
       ? request.weak_concepts.join(', ')
       : 'none';
@@ -109,6 +176,7 @@ export class GeminiAIProvider implements AIProvider {
 Difficulty level: ${request.difficulty}
 Weak concepts to focus on: ${weakConcepts}
 Recent mistakes to address: ${recentMistakes}
+Learner context: ${request.learner_context?.trim() || 'No additional context provided'}
 
 Return the response as a JSON object with this exact structure:
 {
@@ -138,7 +206,7 @@ Important:
 - Each question's difficulty must be easy, medium, or hard.
 - Return ONLY the JSON object, with no additional text.`;
 
-    const text = await this.call(prompt);
+    const text = await this.call(prompt, model);
 
     const parsed = this.parseJson(text) as {
       questions?: unknown;
@@ -199,11 +267,11 @@ Important:
         };
 
         return {
-          question: q.question.trim(),
-          options: q.options.map((option) => option.trim()),
+          question: cleanText(q.question),
+          options: q.options.map((option) => cleanText(option)),
           correctAnswer: q.correctAnswer,
-          explanation: q.explanation.trim(),
-          concept: q.concept.trim(),
+          explanation: cleanText(q.explanation),
+          concept: cleanText(q.concept),
           difficulty: isDifficulty(q.difficulty)
             ? q.difficulty
             : request.difficulty,
@@ -242,17 +310,18 @@ Return a JSON object with this structure:
 
 Return ONLY the JSON object, with no additional text.`;
 
-    const text = await this.call(prompt);
+    const text = await this.callWithFallback(prompt);
 
     const parsed = this.parseJson(text) as {
       is_valid?: unknown;
+      valid?: unknown;
       score?: unknown;
       feedback?: unknown;
       issues?: unknown;
     };
 
     return {
-      valid: parsed.is_valid === true,
+      valid: parsed.is_valid === true || parsed.valid === true,
       score:
         typeof parsed.score === 'number' &&
         Number.isFinite(parsed.score)
@@ -295,7 +364,7 @@ Return a JSON object with this exact structure:
 
 Return ONLY the JSON object, with no additional text.`;
 
-    const text = await this.call(prompt);
+    const text = await this.callWithFallback(prompt);
 
     const parsed = this.parseJson(text) as {
       recommended_topic?: unknown;
