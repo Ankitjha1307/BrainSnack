@@ -95,11 +95,16 @@ export function StartQuizButton({
       window.clearTimeout(creatingTimer);
       window.clearTimeout(checkingTimer);
       setStage("setup");
-      setError(
+      const message =
         err instanceof Error
           ? err.message
-          : "We could not create your quiz. Please try again."
-      );
+          : "We could not create your quiz. Please try again.";
+      console.error("[quiz-generation] request failed", {
+        message,
+        topicId: topicId ?? (categoryId || null),
+        hasContext: Boolean(context),
+      });
+      setError(message);
     }
   };
 

@@ -37,7 +37,7 @@ export class ApiError extends Error {
 }
 
 const TOKEN_KEY = "brainsnack_token";
-const DEFAULT_TIMEOUT_MS = 15000;
+const DEFAULT_TIMEOUT_MS = 45000;
 
 export function getStoredToken(): string | null {
   if (typeof window === "undefined") return null;

@@ -32,12 +32,14 @@ const cleanText = (value: string): string =>
  * browser; the Express route remains responsible for auth and persistence.
  */
 export class GeminiAIProvider implements AIProvider {
-  readonly name = 'gemini' as const;
+  readonly name = config.ai.provider === 'mesh' ? ('mesh' as const) : ('gemini' as const);
 
-  private readonly client = new GoogleGenAI({
-    apiKey: config.ai.geminiApiKey,
-  });
-  private readonly models = config.ai.geminiModels;
+  private readonly client =
+    config.ai.provider === 'gemini'
+      ? new GoogleGenAI({ apiKey: config.ai.geminiApiKey })
+      : null;
+  private readonly models =
+    config.ai.provider === 'mesh' ? config.ai.meshModels : config.ai.geminiModels;
 
   private async call(prompt: string, model: string): Promise<string> {
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
@@ -49,6 +51,49 @@ export class GeminiAIProvider implements AIProvider {
     });
 
     try {
+      if (config.ai.provider === 'mesh') {
+        console.info(`[${this.name}] requesting model "${model}"`);
+        const response = await fetch(`${config.ai.meshBaseUrl}/chat/completions`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${config.ai.meshApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model,
+            messages: [{ role: 'user', content: prompt }],
+            temperature: 0.35,
+            response_format: { type: 'json_object' },
+          }),
+          signal: AbortSignal.timeout(config.ai.timeout),
+        });
+
+        const data = (await response.json().catch(() => null)) as {
+          error?: { message?: string };
+          choices?: Array<{ message?: { content?: string | Array<{ text?: string }> } }>;
+        } | null;
+        if (!response.ok) {
+          console.error(`[${this.name}] request failed`, {
+            model,
+            status: response.status,
+            error: data?.error?.message || 'request failed',
+          });
+          throw new Error(
+            `MeshAPI returned ${response.status}: ${
+              data?.error?.message || 'request failed'
+            }`
+          );
+        }
+
+        const content = data?.choices?.[0]?.message?.content;
+        const text = Array.isArray(content)
+          ? content.map((part) => part.text ?? '').join('')
+          : content ?? '';
+        if (!text.trim()) throw new Error('MeshAPI returned an empty response');
+        return text;
+      }
+
+      if (!this.client) throw new Error('Google Gemini client is not configured');
       const response = await Promise.race([
         this.client.models.generateContent({
           model,
@@ -77,7 +122,7 @@ export class GeminiAIProvider implements AIProvider {
       } catch (error) {
         lastError = error;
         console.warn(
-          `[gemini] model "${model}" failed: ${
+          `[${this.name}] model "${model}" failed: ${
             error instanceof Error ? error.message : 'Unknown error'
           }`
         );
@@ -102,7 +147,7 @@ export class GeminiAIProvider implements AIProvider {
       } catch (error) {
         lastError = error;
         console.warn(
-          `[gemini] model "${model}" failed: ${
+          `[${this.name}] model "${model}" failed: ${
             error instanceof Error ? error.message : 'Unknown error'
           }`
         );

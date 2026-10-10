@@ -35,7 +35,7 @@ if (isProduction && !process.env.MONGODB_URI) {
   throw new Error('MONGODB_URI must be set when NODE_ENV=production');
 }
 
-const aiProvider = (process.env.AI_PROVIDER || 'gemini').toLowerCase();
+const aiProvider = (process.env.AI_PROVIDER || 'mesh').toLowerCase();
 
 export const config = {
   // 3001 so it never collides with the Next.js dev server on 3000.
@@ -57,7 +57,12 @@ export const config = {
   ai: {
     // AI is now served in-process by this REST API - there is no separate
     // FastAPI service to call.
-    provider: aiProvider === 'gemini' ? ('gemini' as const) : ('mock' as const),
+    provider:
+      aiProvider === 'mesh'
+        ? ('mesh' as const)
+        : aiProvider === 'gemini'
+          ? ('gemini' as const)
+          : ('mock' as const),
     geminiApiKey: process.env.GEMINI_API_KEY || '',
     geminiModel: process.env.GEMINI_MODEL || 'gemini-1.5-flash',
     geminiModels: (process.env.GEMINI_MODELS ||
@@ -66,7 +71,14 @@ export const config = {
       .split(',')
       .map((model) => model.trim())
       .filter(Boolean),
-    timeout: parseInt(process.env.AI_TIMEOUT_MS || '10000', 10),
+    meshApiKey: process.env.MESH_API_KEY || '',
+    meshBaseUrl: (process.env.MESH_BASE_URL || 'https://api.meshapi.ai/v1').replace(/\/+$/, ''),
+    meshModels: (process.env.MESH_MODELS ||
+      'google/gemini-3.5-flash,google/gemini-2.5-pro')
+      .split(',')
+      .map((model) => model.trim())
+      .filter(Boolean),
+    timeout: parseInt(process.env.AI_TIMEOUT_MS || '30000', 10),
   },
 
   cors: {

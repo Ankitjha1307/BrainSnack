@@ -66,7 +66,7 @@ export interface AdaptiveRecommendationResult {
 }
 
 export interface AIProvider {
-  readonly name: 'mock' | 'gemini';
+  readonly name: 'mock' | 'gemini' | 'mesh';
   generateQuiz(request: QuizRequest): Promise<QuizResponse>;
   validateQuestion(request: QuestionValidationRequest): Promise<QuestionValidationResult>;
   getAdaptiveRecommendation(

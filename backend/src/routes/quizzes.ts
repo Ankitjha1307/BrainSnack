@@ -101,6 +101,7 @@ const createQuizQuestions = async (
 
 /** POST /api/quizzes/generate */
 router.post('/generate', authMiddleware, async (req: Request, res: Response) => {
+  const requestStartedAt = Date.now();
   try {
     const userId = req.userId!;
     const body = (req.body ?? {}) as GenerateQuizRequest;
@@ -163,6 +164,12 @@ router.post('/generate', authMiddleware, async (req: Request, res: Response) => 
       recentlySeen,
       learnerContext
     );
+    console.info('[quiz-generation] provider completed', {
+      userId,
+      source,
+      questionCount: generated.length,
+      durationMs: Date.now() - requestStartedAt,
+    });
 
     if (generated.length === 0) {
       return res.status(422).json({
@@ -215,7 +222,11 @@ router.post('/generate', authMiddleware, async (req: Request, res: Response) => 
       questions: rows.map((row) => toPublicQuestion(row.doc, row.concept, row.position)),
     });
   } catch (error) {
-    console.error('Generate quiz error:', error);
+    console.error('Generate quiz error:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      durationMs: Date.now() - requestStartedAt,
+      provider: process.env.AI_PROVIDER || 'unset',
+    });
     return res.status(503).json({
       error:
         error instanceof Error

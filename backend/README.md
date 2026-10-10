@@ -227,9 +227,9 @@ After seeding, you can login with any of these accounts (password: `password123`
 MIT
 ## Gemini model fallback
 
-Set `AI_PROVIDER=gemini` and provide `GEMINI_API_KEY`. The backend uses the
-official Google GenAI SDK and tries the
-comma-separated `GEMINI_MODELS` list in order for quiz generation, question
+Set `AI_PROVIDER=mesh` and provide `MESH_API_KEY`. MeshAPI uses an
+OpenAI-compatible paid Gemini endpoint and tries the
+comma-separated `MESH_MODELS` list in order for quiz generation, question
 validation, and adaptive recommendations. It uses the local question bank only
 after all configured Gemini models fail. If both AI and the bank are empty, the
 API uses a clearly marked offline demo fallback so a presentation can continue.
